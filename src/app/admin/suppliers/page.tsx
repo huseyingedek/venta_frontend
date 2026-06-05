@@ -13,21 +13,23 @@ export default function AdminSuppliersPage() {
   const [syncingId, setSyncingId] = useState<string | null>(null);
 
   const [supplierForm, setSupplierForm] = useState({ name: '', contactEmail: '' });
+  const xmlTedarikMapping = JSON.stringify({
+    root: 'products.product',
+    name: 'name',
+    sku: 'productCode',
+    price: 'listPrice',
+    stock: 'quantity',
+    description: 'detail',
+    image: 'image1',
+    category: 'category',
+  }, null, 2);
+
   const [feedForm, setFeedForm] = useState({
     name: '',
     url: '',
     cronSchedule: '0 */6 * * *',
     isActive: true,
-    fieldMapping: JSON.stringify({
-      itemSelector: 'Product',
-      name: 'Name',
-      sku: 'StockCode',
-      price: 'Price',
-      stock: 'Quantity',
-      description: 'Description',
-      thumbnail: 'Image',
-      category: 'Category',
-    }, null, 2),
+    fieldMapping: xmlTedarikMapping,
   });
 
   const { data: suppliers = [], isLoading } = useQuery<any[]>({
@@ -70,7 +72,7 @@ export default function AdminSuppliersPage() {
     try {
       const res = await api.post(`/suppliers/feeds/${feedId}/sync`);
       const d = res.data.data;
-      toast.success(`Senkronize edildi: ${d.synced} ürün eklendi/güncellendi.`);
+      toast.success(`Tamamlandı: ${d.created} yeni, ${d.updated} güncellendi, ${d.skipped} atlandı.`);
       qc.invalidateQueries({ queryKey: ['suppliers'] });
     } catch (e: any) {
       toast.error(e.response?.data?.message || 'Senkronizasyon hatası');

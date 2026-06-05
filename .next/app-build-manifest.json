@@ -1,9 +1,14 @@
 {
   "pages": {
-    "/admin/page": [
+    "/(store)/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/page.js"
+      "static/chunks/app/(store)/page.js"
+    ],
+    "/(store)/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(store)/layout.js"
     ],
     "/layout": [
       "static/chunks/webpack.js",
@@ -20,6 +25,11 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/not-found.js"
+    ],
+    "/admin/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/admin/page.js"
     ],
     "/admin/layout": [
       "static/chunks/webpack.js",
