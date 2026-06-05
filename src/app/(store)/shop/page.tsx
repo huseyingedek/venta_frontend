@@ -37,7 +37,10 @@ export default function ShopPage() {
     page, sort, order, limit: 24,
   };
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<{
+    data: any[];
+    pagination: { page: number; limit: number; total: number; pages: number };
+  }>({
     queryKey: ['products', filters],
     queryFn: () => api.get('/products', { params: filters }).then(r => r.data),
     keepPreviousData: true,
@@ -235,7 +238,7 @@ export default function ShopPage() {
           {/* Sayfalama */}
           {pagination && pagination.pages > 1 && (
             <div className="mt-10 flex justify-center gap-2 flex-wrap">
-              <button onClick={() => setPage(p => Math.max(1, p-1))} disabled={page===1} className="h-9 px-3 rounded-lg text-sm border hover:border-brand-300 disabled:opacity-40">‹</button>
+              <button onClick={() => setPage(p => Math.max(1, p-1))} disabled={page===1} className="h-9 px-3 rounded-lg text-sm border hover:border-brand-300 disabled:opacity-40">{'<'}</button>
               {Array.from({ length: Math.min(pagination.pages, 7) }, (_, i) => {
                 const p = pagination.pages <= 7 ? i+1 : page <= 4 ? i+1 : page >= pagination.pages-3 ? pagination.pages-6+i : page-3+i;
                 return (
@@ -244,7 +247,7 @@ export default function ShopPage() {
                   </button>
                 );
               })}
-              <button onClick={() => setPage(p => Math.min(pagination.pages, p+1))} disabled={page===pagination.pages} className="h-9 px-3 rounded-lg text-sm border hover:border-brand-300 disabled:opacity-40">›</button>
+              <button onClick={() => setPage(p => Math.min(pagination.pages, p+1))} disabled={page===pagination.pages} className="h-9 px-3 rounded-lg text-sm border hover:border-brand-300 disabled:opacity-40">{'>'}</button>
             </div>
           )}
         </div>

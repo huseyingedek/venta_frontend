@@ -93,10 +93,13 @@ export default function CheckoutPage() {
     },
   });
 
-  if (!isAuthenticated) {
-    router.push('/auth/login');
-    return null;
-  }
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/auth/login');
+    }
+  }, [isAuthenticated, router]);
+
+  if (!isAuthenticated) return null;
 
   if (user && !user.emailVerified) {
     return (

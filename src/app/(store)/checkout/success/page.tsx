@@ -1,11 +1,12 @@
 'use client';
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { CheckCircle, Package, ArrowRight, Home } from 'lucide-react';
+import { CheckCircle, Package, Home, Loader2 } from 'lucide-react';
 import api from '@/lib/api';
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
 
@@ -58,5 +59,13 @@ export default function CheckoutSuccessPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 size={32} className="animate-spin text-brand-500" /></div>}>
+      <CheckoutSuccessContent />
+    </Suspense>
   );
 }
