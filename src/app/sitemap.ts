@@ -1,0 +1,50 @@
+import type { MetadataRoute } from 'next';
+
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://ventapremium.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Statik sayfalar
+  const staticPages: MetadataRoute.Sitemap = [
+    { url: BASE_URL, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
+    { url: `${BASE_URL}/shop`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+    { url: `${BASE_URL}/auth/login`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
+    { url: `${BASE_URL}/auth/register`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
+  ];
+
+  // Dinamik: ürünler
+  let productPages: MetadataRoute.Sitemap = [];
+  try {
+    const res = await fetch(`${API_URL}/products?limit=1000&sort=createdAt&order=desc`, {
+      next: { revalidate: 3600 },
+    });
+    if (res.ok) {
+      const json = await res.json();
+      const products = json.data || [];
+      productPages = products.map((p: any) => ({
+        url: `${BASE_URL}/product/${p.slug}`,
+        lastModified: new Date(p.updatedAt || p.createdAt),
+        changeFrequency: 'weekly' as const,
+        priority: 0.8,
+      }));
+    }
+  } catch { /* sitemap oluşturmaya devam et */ }
+
+  // Dinamik: kategoriler
+  let categoryPages: MetadataRoute.Sitemap = [];
+  try {
+    const res = await fetch(`${API_URL}/categories`, { next: { revalidate: 86400 } });
+    if (res.ok) {
+      const json = await res.json();
+      const categories = json.data || [];
+      categoryPages = categories.map((c: any) => ({
+        url: `${BASE_URL}/shop?category=${c.slug}`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
+      }));
+    }
+  } catch { /* devam et */ }
+
+  return [...staticPages, ...productPages, ...categoryPages];
+}

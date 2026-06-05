@@ -1,0 +1,32 @@
+import type { Metadata } from 'next';
+import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
+import { Toaster } from 'react-hot-toast';
+import './globals.css';
+import Providers from './providers';
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const plusJakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-plus-jakarta' });
+
+export const metadata: Metadata = {
+  title: { default: 'Venta Premium | Kalite ve Güvenin Adresi', template: '%s | Venta Premium' },
+  description: 'Venta Premium ile binlerce ürün arasından güvenle alışveriş yapın. Hızlı kargo, kolay iade, güvenli ödeme.',
+  keywords: ['e-ticaret', 'online alışveriş', 'venta premium', 'güvenilir alışveriş'],
+  openGraph: {
+    siteName: 'Venta Premium',
+    type: 'website',
+    locale: 'tr_TR',
+  },
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="tr" suppressHydrationWarning>
+      <body className={`${inter.variable} ${plusJakarta.variable} font-sans`}>
+        <Providers>
+          {children}
+          <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
+        </Providers>
+      </body>
+    </html>
+  );
+}
