@@ -29,7 +29,9 @@ export default function ProductCard({ product }: { product: Product }) {
   const [inWishlist, setInWishlist] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
 
+  const [hovered, setHovered] = useState(false);
   const imageUrl = product.thumbnail || product.images?.[0]?.url;
+  const secondImage = product.images?.[1]?.url;
   const discountPercent = product.comparePrice
     ? Math.round(((Number(product.comparePrice) - Number(product.price)) / Number(product.comparePrice)) * 100)
     : 0;
@@ -62,7 +64,7 @@ export default function ProductCard({ product }: { product: Product }) {
   };
 
   return (
-    <div className="card group relative flex flex-col overflow-hidden transition-shadow hover:shadow-card-hover">
+    <div className="card group relative flex flex-col overflow-hidden transition-shadow hover:shadow-card-hover" onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
       {/* Badges */}
       <div className="absolute left-3 top-3 z-10 flex flex-col gap-1">
         {product.isNew && <span className="badge bg-green-500 text-white text-xs">Yeni</span>}
@@ -85,15 +87,26 @@ export default function ProductCard({ product }: { product: Product }) {
       </button>
 
       {/* Görsel */}
-      <Link href={`/product/${product.slug}`} className="block aspect-square bg-gray-50 overflow-hidden">
+      <Link href={`/product/${product.slug}`} className="block aspect-square bg-gray-50 overflow-hidden relative">
         {imageUrl ? (
-          <Image
-            src={getImgSrc(imageUrl)}
-            alt={product.name}
-            width={400}
-            height={400}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
+          <>
+            <Image
+              src={getImgSrc(imageUrl)}
+              alt={product.name}
+              width={400}
+              height={400}
+              className={`h-full w-full object-cover transition-all duration-500 ${hovered && secondImage ? 'opacity-0 scale-105' : 'opacity-100 scale-100'}`}
+            />
+            {secondImage && (
+              <Image
+                src={getImgSrc(secondImage)}
+                alt={product.name}
+                width={400}
+                height={400}
+                className={`absolute inset-0 h-full w-full object-cover transition-all duration-500 ${hovered ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}
+              />
+            )}
+          </>
         ) : (
           <div className="flex h-full items-center justify-center text-gray-300 text-4xl">📦</div>
         )}

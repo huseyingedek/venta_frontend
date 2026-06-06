@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import {
   LayoutDashboard, Package, Tags, ShoppingBag, Users,
-  Truck, Settings, LogOut, Menu, X, RefreshCw, BarChart2
+  Truck, LogOut, Menu, X, BarChart2, LayoutTemplate
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useState } from 'react';
@@ -17,6 +17,7 @@ const navItems = [
   { href: '/admin/users', label: 'Kullanıcılar', icon: Users },
   { href: '/admin/suppliers', label: 'Tedarikçi & XML', icon: Truck },
   { href: '/admin/reviews', label: 'Yorumlar', icon: BarChart2 },
+  { href: '/admin/homepage', label: 'Anasayfa', icon: LayoutTemplate },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

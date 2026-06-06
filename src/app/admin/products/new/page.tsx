@@ -1,9 +1,10 @@
 'use client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { Plus, Trash2, Upload, ArrowLeft } from 'lucide-react';
 import api from '@/lib/api';
+import CategorySelect from '@/components/ui/CategorySelect';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { useState, useRef } from 'react';
@@ -29,13 +30,18 @@ export default function NewProductPage() {
 
   const { fields: attrFields, append: appendAttr, remove: removeAttr } = useFieldArray({ control, name: 'attributes' });
 
-  const { data: categoriesData } = useQuery({
-    queryKey: ['admin-categories-all'],
+  const { data: categoriesTree = [] } = useQuery({
+    queryKey: ['admin-categories-tree'],
     queryFn: () => api.get('/categories?all=true').then(r => r.data.data),
   });
 
-  // Tüm kategorileri düzleştir (ana + alt)
-  const allCategories = categoriesData?.flatMap((c: any) => [c, ...(c.children || [])]) || [];
+  function flattenCats(cats: any[], depth = 0): any[] {
+    return cats.flatMap(c => [
+      { ...c, _depth: depth },
+      ...flattenCats(c.children || [], depth + 1),
+    ]);
+  }
+  const allCategories = flattenCats(categoriesTree);
 
   const uploadImage = async (file: File) => {
     const formData = new FormData();
@@ -118,14 +124,18 @@ export default function NewProductPage() {
                 </div>
                 <div>
                   <label className="label">Kategori *</label>
-                  <select {...register('categoryId', { required: 'Kategori seçin' })} className="input">
-                    <option value="">Kategori seçin</option>
-                    {allCategories.map((cat: any) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.parentId ? `  └ ${cat.name}` : cat.name}
-                      </option>
-                    ))}
-                  </select>
+                  <Controller
+                    name="categoryId"
+                    control={control}
+                    rules={{ required: 'Kategori seçin' }}
+                    render={({ field }) => (
+                      <CategorySelect
+                        cats={allCategories}
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    )}
+                  />
                   {errors.categoryId && <p className="mt-1 text-xs text-red-500">{errors.categoryId.message as string}</p>}
                 </div>
               </div>
