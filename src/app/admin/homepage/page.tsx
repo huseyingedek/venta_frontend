@@ -199,7 +199,7 @@ export default function HomepagePage() {
               onToggle={() => toggleActive.mutate({ id: section.id, isActive: !section.isActive })}
               onDelete={() => { if (confirm(`"${section.title}" silinsin mi?`)) deleteSection.mutate(section.id); }}
               onMove={(dir: 'up' | 'down') => moveSection.mutate({ id: section.id, dir })}
-              onUpdate={data => updateSection.mutate({ id: section.id, data })}
+              onUpdate={(data: Record<string, unknown>) => updateSection.mutate({ id: section.id, data })}
               onRemoveProduct={(productId: string) => removeProduct.mutate({ sectionId: section.id, productId })}
               onProductAdded={() => qc.invalidateQueries({ queryKey: ['homepage-sections-admin'] })}
             />
