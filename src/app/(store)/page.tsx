@@ -1,12 +1,12 @@
 import Link from 'next/link';
-import { ArrowRight, Shield, Truck, RefreshCw, Star } from 'lucide-react';
+import { ArrowRight, Shield, Truck, RefreshCw, Star, MessageCircle, Tag, Flame } from 'lucide-react';
 import ProductCard from '@/components/product/ProductCard';
 import HeroSlider from '@/components/layout/HeroSlider';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
 const features = [
-  { icon: Truck, title: 'Hızlı Kargo', desc: '500 TL üzeri ücretsiz, 1-3 iş günü teslimat' },
+  { icon: Truck, title: 'Hızlı Kargo', desc: 'Sürat Kargo ile 1-3 iş günü teslimat' },
   { icon: Shield, title: 'Güvenli Ödeme', desc: '256-bit SSL şifreleme, İYZİCO güvencesi' },
   { icon: RefreshCw, title: 'Kolay İade', desc: '14 gün içinde ücretsiz iade imkânı' },
   { icon: Star, title: 'Premium Kalite', desc: 'Sadece güvenilir marka ve tedarikçiler' },
@@ -47,11 +47,27 @@ async function getNewProducts() {
   }
 }
 
+async function getDiscountProducts() {
+  try {
+    const res = await fetch(`${API_URL}/products?hasDiscount=true&limit=4&sort=createdAt&order=desc`, {
+      next: { revalidate: 120 },
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.data || [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function HomePage() {
-  const [featuredProducts, newProducts] = await Promise.all([
+  const [featuredProducts, newProducts, discountProducts] = await Promise.all([
     getFeaturedProducts(),
     getNewProducts(),
+    getDiscountProducts(),
   ]);
+
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '905000000000';
 
   return (
     <div>
@@ -99,6 +115,31 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Fırsat Ürünleri */}
+      {discountProducts.length > 0 && (
+        <section className="container pb-14">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-red-500 p-2">
+                <Flame size={18} className="text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold">🔥 Fırsat Ürünleri</h2>
+                <p className="text-sm text-gray-500 mt-0.5">İndirimli ürünleri kaçırma!</p>
+              </div>
+            </div>
+            <Link href="/shop?hasDiscount=true" className="text-sm text-brand-600 hover:text-brand-700 font-medium flex items-center gap-1">
+              Tümünü Gör <ArrowRight size={14} />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {discountProducts.map((product: any) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Öne Çıkan Ürünler */}
       {featuredProducts.length > 0 && (
         <section className="container pb-14">
@@ -140,7 +181,7 @@ export default async function HomePage() {
       )}
 
       {/* Ürün yoksa statik placeholder */}
-      {featuredProducts.length === 0 && newProducts.length === 0 && (
+      {featuredProducts.length === 0 && newProducts.length === 0 && discountProducts.length === 0 && (
         <section className="container pb-14">
           <div className="rounded-3xl bg-gray-50 border-2 border-dashed border-gray-200 py-16 text-center">
             <p className="text-4xl mb-4">📦</p>
@@ -203,8 +244,34 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Bülten Kaydı */}
+      <section className="border-y bg-brand-50 py-12">
+        <div className="container">
+          <div className="flex flex-col items-center text-center md:flex-row md:text-left md:justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-2 mb-2 justify-center md:justify-start">
+                <Tag size={18} className="text-brand-600" />
+                <span className="text-sm font-semibold text-brand-600 uppercase tracking-wide">Özel Fırsatlar</span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">Kampanyaları Kaçırma!</h3>
+              <p className="mt-1 text-sm text-gray-500">E-posta listemize katıl, özel indirimleri ilk sen öğren.</p>
+            </div>
+            <div className="flex w-full max-w-md gap-2">
+              <input
+                type="email"
+                placeholder="E-posta adresiniz"
+                className="input flex-1 rounded-xl"
+              />
+              <button className="btn-primary px-5 rounded-xl whitespace-nowrap">
+                Kayıt Ol
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Banner */}
-      <section className="container pb-14">
+      <section className="container py-14">
         <div className="rounded-3xl bg-gradient-to-r from-brand-600 to-brand-700 px-8 py-12 text-center text-white">
           <h2 className="text-3xl font-bold">Üye Ol, Ayrıcalıkları Kazan</h2>
           <p className="mt-3 text-brand-100">İlk alışverişine özel %10 indirim ve özel fırsatlardan yararlan.</p>
@@ -213,6 +280,18 @@ export default async function HomePage() {
           </Link>
         </div>
       </section>
+
+      {/* WhatsApp Floating Button */}
+      <a
+        href={`https://wa.me/${whatsappNumber}?text=Merhaba%2C%20sipari%C5%9F%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum.`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-green-500 text-white shadow-lg hover:bg-green-600 transition-all hover:scale-110"
+        title="WhatsApp ile iletişim"
+        aria-label="WhatsApp"
+      >
+        <MessageCircle size={26} fill="white" />
+      </a>
     </div>
   );
 }

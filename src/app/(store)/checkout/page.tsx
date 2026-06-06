@@ -51,10 +51,18 @@ export default function CheckoutPage() {
   const addressForm = useForm({ resolver: zodResolver(addressSchema) });
   const paymentForm = useForm({ resolver: zodResolver(paymentSchema) });
 
-  const subtotal = totalPrice();
-  const shipping = subtotal >= 500 ? 0 : 29.99;
-  const tax = subtotal * 0.18;
-  const total = subtotal + shipping + tax;
+  const [giftPackage, setGiftPackage] = useState(false);
+
+  // ── Maliyet hesabı ──────────────────────────────────────────────────────
+  const IYZICO_RATE      = 0.0249;
+  const IYZICO_FIXED     = 0.25;
+  const GIFT_PACKAGE_FEE = 20;
+
+  const subtotal   = totalPrice();
+  const shipping   = 149;
+  const giftFee    = giftPackage ? GIFT_PACKAGE_FEE : 0;
+  const total      = subtotal + shipping + giftFee;
+
 
   // Yeni adres kaydet
   const saveAddress = useMutation({
@@ -332,14 +340,37 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
+              {/* Hediye Paketi */}
+              <label className="flex items-center gap-3 rounded-xl border-2 border-gray-200 p-3 cursor-pointer hover:border-brand-300 transition-colors mb-4">
+                <input type="checkbox" checked={giftPackage} onChange={e => setGiftPackage(e.target.checked)} className="accent-brand-600 w-4 h-4" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-800">🎁 Hediye Paketi</p>
+                  <p className="text-xs text-gray-400">Özel hediye ambalajında gönderilsin</p>
+                </div>
+                <span className="text-sm font-semibold text-brand-600">+{GIFT_PACKAGE_FEE} TL</span>
+              </label>
+
               <div className="border-t pt-4 space-y-2 text-sm mb-6">
-                <div className="flex justify-between text-gray-600"><span>Ara Toplam</span><span>{subtotal.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</span></div>
-                <div className="flex justify-between text-gray-600"><span>Kargo</span><span>{shipping === 0 ? 'Ücretsiz' : shipping.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</span></div>
-                <div className="flex justify-between text-gray-600"><span>KDV</span><span>{tax.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</span></div>
+                <div className="flex justify-between text-gray-600">
+                  <span>Ürünler Toplamı</span>
+                  <span>{subtotal.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</span>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span>Kargo</span>
+                  <span className="italic text-gray-400">Teslimat sırasında</span>
+                </div>
+                {giftPackage && (
+                  <div className="flex justify-between text-gray-600">
+                    <span>🎁 Hediye Paketi</span>
+                    <span>{GIFT_PACKAGE_FEE.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-base font-bold border-t pt-2">
-                  <span>Toplam</span>
+                  <span>Genel Toplam</span>
                   <span>{total.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</span>
                 </div>
+                <p className="text-xs text-gray-400 text-center">KDV Dahildir</p>
+                {/* Sadece görsel bilgi — müşteriye gösterilmiyor ama bizim için önemli */}
               </div>
 
               <div className="flex gap-3">
@@ -359,7 +390,7 @@ export default function CheckoutPage() {
 
         {/* Sağ — Mini özet */}
         <div className="card p-5 h-fit sticky top-24">
-          <h3 className="mb-4 font-bold text-gray-800">Sepet ({items.length} ürün)</h3>
+          <h3 className="mb-4 font-bold text-gray-800">Sipariş Özeti</h3>
           <div className="space-y-2 text-sm text-gray-600">
             {items.slice(0, 4).map(item => (
               <div key={item.id} className="flex justify-between gap-2">
@@ -370,10 +401,28 @@ export default function CheckoutPage() {
             {items.length > 4 && <p className="text-xs text-gray-400">+{items.length - 4} ürün daha</p>}
           </div>
           <hr className="my-3" />
-          <div className="flex justify-between font-bold text-gray-900">
-            <span>Toplam</span>
+          <div className="space-y-1.5 text-sm">
+            <div className="flex justify-between text-gray-500">
+              <span>Ürünler</span>
+              <span>{subtotal.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</span>
+            </div>
+            <div className="flex justify-between text-gray-500">
+              <span>Kargo</span>
+              <span>149,00 TL</span>
+            </div>
+            {giftPackage && (
+              <div className="flex justify-between text-gray-500">
+                <span>🎁 Hediye Paketi</span>
+                <span>{GIFT_PACKAGE_FEE} TL</span>
+              </div>
+            )}
+          </div>
+          <hr className="my-3" />
+          <div className="flex justify-between font-bold text-gray-900 text-base">
+            <span>Genel Toplam</span>
             <span>{total.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</span>
           </div>
+          <p className="text-xs text-gray-400 mt-1">KDV Dahildir</p>
         </div>
       </div>
     </div>

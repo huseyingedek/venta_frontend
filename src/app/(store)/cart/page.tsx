@@ -23,9 +23,8 @@ export default function CartPage() {
   };
 
   const subtotal = totalPrice();
-  const shipping = subtotal >= 500 ? 0 : 29.99;
-  const tax = subtotal * 0.18;
-  const total = subtotal + shipping + tax;
+  const shipping = 149;
+  const total = subtotal + shipping;
 
   if (!isAuthenticated) {
     return (
@@ -143,29 +142,19 @@ export default function CartPage() {
             <h2 className="mb-4 text-base font-bold">Sipariş Özeti</h2>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between text-gray-600">
-                <span>Ara Toplam</span>
+                <span>Ürünler Toplamı</span>
                 <span>{subtotal.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>Kargo</span>
-                <span className={shipping === 0 ? 'text-green-600 font-medium' : ''}>
-                  {shipping === 0 ? 'Ücretsiz' : shipping.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
-                </span>
+                <span>149,00 TL</span>
               </div>
-              <div className="flex justify-between text-gray-600">
-                <span>KDV (%18)</span>
-                <span>{tax.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</span>
-              </div>
-              {shipping > 0 && (
-                <p className="rounded-lg bg-orange-50 px-3 py-2 text-xs text-orange-600">
-                  {(500 - subtotal).toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })} daha ekleyin, kargo bedava!
-                </p>
-              )}
               <hr />
               <div className="flex justify-between text-base font-bold text-gray-900">
-                <span>Toplam</span>
-                <span>{total.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</span>
+                <span>Genel Toplam</span>
+                <span className="text-brand-600">{total.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</span>
               </div>
+              <p className="text-xs text-gray-400 text-center">KDV Dahildir</p>
             </div>
 
             <button
@@ -183,7 +172,7 @@ export default function CartPage() {
           {/* Güven rozetleri */}
           <div className="rounded-2xl bg-gray-50 p-4 text-xs text-gray-500 text-center space-y-1">
             <p>🔒 256-bit SSL şifreleme ile güvenli ödeme</p>
-            <p>🚚 Ücretsiz kargo (500 TL üzeri)</p>
+            <p>🚚 Hızlı teslimat — Sürat Kargo</p>
             <p>↩️ 14 gün içinde ücretsiz iade</p>
           </div>
         </div>

@@ -93,7 +93,7 @@ export default function Header() {
   return (
     <header className={`sticky top-0 z-50 bg-white transition-shadow ${isScrolled ? 'shadow-md' : 'border-b border-gray-100'}`}>
       <div className="bg-dark text-white py-1.5 text-center text-xs">
-        Tüm siparişlerde ücretsiz kargo — 500 TL ve üzeri 🚚
+        Hızlı Teslimat — Sürat Kargo 🚚 &nbsp;|&nbsp; Güvenli Ödeme — İYZİCO 🔒
       </div>
 
       {/* E-posta doğrulama banner */}
@@ -235,14 +235,47 @@ export default function Header() {
         </div>
 
         {/* Kategori nav */}
-        <nav className="hidden md:flex items-center gap-6 py-2 border-t border-gray-50 text-sm overflow-x-auto">
-          <Link href="/shop" className="font-medium text-gray-700 hover:text-brand-600 transition-colors whitespace-nowrap">Tüm Ürünler</Link>
-          {categories.slice(0, 6).map((cat: any) => (
-            <Link key={cat.id} href={`/shop?category=${cat.slug}`} className="text-gray-600 hover:text-brand-600 transition-colors whitespace-nowrap">
-              {cat.name}
-            </Link>
+        <nav className="hidden md:flex items-center gap-1 py-2 border-t border-gray-50 text-sm">
+          <Link href="/shop" className="px-3 py-1.5 font-medium text-gray-700 hover:text-brand-600 hover:bg-gray-50 rounded-lg transition-colors whitespace-nowrap">
+            Tüm Ürünler
+          </Link>
+          {categories.slice(0, 7).map((cat: any) => (
+            <div key={cat.id} className="relative group">
+              <Link
+                href={`/shop?category=${cat.slug}`}
+                className="flex items-center gap-1 px-3 py-1.5 text-gray-600 hover:text-brand-600 hover:bg-gray-50 rounded-lg transition-colors whitespace-nowrap"
+              >
+                {cat.name}
+                {cat.children?.length > 0 && <ChevronDown size={12} className="opacity-50" />}
+              </Link>
+              {cat.children?.length > 0 && (
+                <div className="absolute top-full left-0 z-50 hidden group-hover:block bg-white border border-gray-100 rounded-xl shadow-lg py-1.5 min-w-[180px]">
+                  {cat.children.map((child: any) => (
+                    <Link key={child.id} href={`/shop?category=${child.slug}`} className="block px-4 py-1.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-brand-600 transition-colors">
+                      {child.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
-          <Link href="/shop?featured=true" className="ml-auto text-brand-600 font-medium hover:text-brand-700 transition-colors whitespace-nowrap">✨ Öne Çıkanlar</Link>
+          {categories.length > 7 && (
+            <div className="relative group">
+              <button className="flex items-center gap-1 px-3 py-1.5 text-gray-500 hover:text-brand-600 hover:bg-gray-50 rounded-lg transition-colors whitespace-nowrap">
+                Daha Fazla <ChevronDown size={12} />
+              </button>
+              <div className="absolute top-full left-0 z-50 hidden group-hover:block bg-white border border-gray-100 rounded-xl shadow-lg py-1.5 min-w-[180px] max-h-64 overflow-y-auto">
+                {categories.slice(7).map((cat: any) => (
+                  <Link key={cat.id} href={`/shop?category=${cat.slug}`} className="block px-4 py-1.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-brand-600 transition-colors">
+                    {cat.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+          <Link href="/shop?featured=true" className="ml-auto px-3 py-1.5 text-brand-600 font-medium hover:text-brand-700 hover:bg-brand-50 rounded-lg transition-colors whitespace-nowrap">
+            ✨ Öne Çıkanlar
+          </Link>
         </nav>
       </div>
 

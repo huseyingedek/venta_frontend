@@ -65,7 +65,7 @@ export default function ShopPage() {
           Kategoriler {catExpanded ? <ChevronUp size={15}/> : <ChevronDown size={15}/>}
         </button>
         {catExpanded && (
-          <div className="space-y-0.5">
+          <div className="max-h-72 overflow-y-auto space-y-0.5 pr-1 scrollbar-thin">
             <Link
               href="/shop"
               className={`block rounded-lg px-3 py-1.5 text-sm transition-colors ${!activeCategory ? 'bg-brand-50 text-brand-600 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
@@ -74,23 +74,24 @@ export default function ShopPage() {
             </Link>
             {catData.map((cat: any) => (
               <div key={cat.id}>
-                {/* Ana kategori */}
                 <Link
                   href={`/shop?category=${cat.slug}`}
-                  className={`block rounded-lg px-3 py-1.5 text-sm transition-colors ${activeCategory === cat.slug ? 'bg-brand-50 text-brand-600 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
+                  className={`block rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${activeCategory === cat.slug ? 'bg-brand-50 text-brand-600' : 'text-gray-700 hover:bg-gray-50'}`}
                 >
                   {cat.name}
                 </Link>
-                {/* Alt kategoriler */}
-                {cat.children?.map((child: any) => (
-                  <Link
-                    key={child.id}
-                    href={`/shop?category=${child.slug}`}
-                    className={`block rounded-lg pl-6 pr-3 py-1 text-sm transition-colors ${activeCategory === child.slug ? 'bg-brand-50 text-brand-600 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}
-                  >
-                    └ {child.name}
-                  </Link>
-                ))}
+                {/* Sadece aktif kategorinin alt kategorilerini göster */}
+                {(activeCategory === cat.slug || cat.children?.some((c: any) => c.slug === activeCategory)) &&
+                  cat.children?.map((child: any) => (
+                    <Link
+                      key={child.id}
+                      href={`/shop?category=${child.slug}`}
+                      className={`block rounded-lg pl-6 pr-3 py-1 text-xs transition-colors ${activeCategory === child.slug ? 'bg-brand-50 text-brand-600 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}
+                    >
+                      └ {child.name}
+                    </Link>
+                  ))
+                }
               </div>
             ))}
           </div>
