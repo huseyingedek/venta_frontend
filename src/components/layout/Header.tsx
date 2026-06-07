@@ -61,7 +61,7 @@ function CatItem({ cat }: { cat: any }) {
   }
 
   return (
-    <div className="relative" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
+    <div onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
       <Link
         href={`/shop?category=${cat.slug}`}
         className={`flex items-center gap-1 px-3.5 py-3 text-[13px] font-semibold whitespace-nowrap transition-colors border-b-2 h-full ${open ? 'text-brand-600 border-brand-600' : 'text-gray-700 border-transparent hover:text-brand-600 hover:border-brand-600'}`}
@@ -70,19 +70,17 @@ function CatItem({ cat }: { cat: any }) {
         <ChevronDown size={11} className={`transition-transform duration-200 opacity-50 ${open ? 'rotate-180 opacity-100' : ''}`} />
       </Link>
 
-      {/* Mega dropdown */}
+      {/* Mega dropdown — nav'a absolute, full genişlik */}
       {open && (
         <div
-          className="fixed left-0 right-0 z-40"
-          style={{ top: 'var(--nav-bottom, 160px)' }}
+          className="absolute left-0 right-0 z-50"
+          style={{ top: '100%' }}
           onMouseEnter={handleEnter}
           onMouseLeave={handleLeave}
         >
-          {/* Koyu arka plan overlay — tıklayınca kapatır */}
-          <div className="fixed inset-0 bg-black/20 -z-10" onClick={() => setOpen(false)} />
-          <div className="container relative z-50">
-            <div className="h-0.5 bg-brand-600" />
-            <div className="bg-white border border-t-0 border-gray-200 shadow-2xl p-6 max-h-[65vh] overflow-y-auto">
+          <div className="h-0.5 bg-brand-600" />
+          <div className="bg-white border border-t-0 border-gray-200 shadow-2xl">
+            <div className="container py-6">
               <div
                 className="grid gap-x-8 gap-y-5"
                 style={{ gridTemplateColumns: `repeat(${Math.min(Math.ceil(cat.children.length / 3), 4)}, 1fr)` }}
@@ -162,23 +160,6 @@ export default function Header() {
     const fn = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener('scroll', fn);
     return () => window.removeEventListener('scroll', fn);
-  }, []);
-
-  // Mega dropdown top pozisyonunu header yüksekliğine göre ayarla
-  useEffect(() => {
-    const updateNavBottom = () => {
-      const header = document.querySelector('header');
-      if (header) {
-        document.documentElement.style.setProperty('--nav-bottom', `${header.getBoundingClientRect().bottom}px`);
-      }
-    };
-    updateNavBottom();
-    window.addEventListener('resize', updateNavBottom);
-    window.addEventListener('scroll', updateNavBottom);
-    return () => {
-      window.removeEventListener('resize', updateNavBottom);
-      window.removeEventListener('scroll', updateNavBottom);
-    };
   }, []);
 
   useEffect(() => {
@@ -445,14 +426,14 @@ export default function Header() {
       </div>
 
       {/* ── 3. KATMAN: Kategori navigasyonu ─────────────────────── */}
-      <nav className="hidden md:block bg-white border-b border-gray-200">
+      <nav className="hidden md:block bg-white border-b border-gray-200 relative">
         {/* Renkli üst şerit */}
         <div className="h-1 w-full" style={{
           background: 'linear-gradient(to right, #e53e3e, #dd6b20, #d69e2e, #38a169, #3182ce, #805ad5, #d53f8c)'
         }} />
 
         {/* Kategori çubuğu */}
-        <div className="container relative">
+        <div className="container">
           <div className="flex items-stretch">
 
             {/* İlk 8 kategori doğrudan göster */}

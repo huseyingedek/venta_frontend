@@ -18,8 +18,25 @@ export default function AccountPage() {
   useEffect(() => { if (!_hydrated) return; if (!isAuthenticated) router.push('/auth/login'); }, [_hydrated, isAuthenticated]);
 
   const profileForm = useForm({
-    defaultValues: { firstName: user?.firstName || '', lastName: user?.lastName || '', phone: '' }
+    defaultValues: { firstName: '', lastName: '', phone: '' }
   });
+
+  // API'den tam profil çek (phone dahil)
+  const { data: profileData } = useQuery({
+    queryKey: ['my-profile'],
+    queryFn: () => api.get('/users/profile').then(r => r.data.data),
+    enabled: isAuthenticated,
+  });
+
+  useEffect(() => {
+    if (profileData) {
+      profileForm.reset({
+        firstName: profileData.firstName || '',
+        lastName: profileData.lastName || '',
+        phone: profileData.phone || '',
+      });
+    }
+  }, [profileData?.id]);
   const passwordForm = useForm({ defaultValues: { currentPassword: '', newPassword: '', confirm: '' } });
   const addressForm = useForm({
     defaultValues: { title: '', firstName: '', lastName: '', phone: '', city: '', district: '', fullAddress: '', isDefault: false }
