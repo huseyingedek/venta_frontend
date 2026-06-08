@@ -157,8 +157,13 @@ export default function Header() {
   useEffect(() => { if (isAuthenticated) fetchCart(); }, [isAuthenticated]);
 
   useEffect(() => {
-    const fn = () => setIsScrolled(window.scrollY > 10);
-    window.addEventListener('scroll', fn);
+    const fn = () => {
+      const y = window.scrollY;
+      // Hysteresis: gizle > 80px, göster < 30px — aradaki bölgede state değişmez (titreme önlenir)
+      if (y > 80) setIsScrolled(true);
+      else if (y < 30) setIsScrolled(false);
+    };
+    window.addEventListener('scroll', fn, { passive: true });
     return () => window.removeEventListener('scroll', fn);
   }, []);
 

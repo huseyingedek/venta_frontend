@@ -35,13 +35,13 @@ export default function WishlistPage() {
   };
 
   return (
-    <div className="container py-8">
-      <h1 className="mb-6 text-2xl font-bold flex items-center gap-2">
+    <div className="container py-4 sm:py-8">
+      <h1 className="mb-5 text-xl sm:text-2xl font-bold flex items-center gap-2">
         <Heart size={22} className="text-red-500 fill-red-500" /> Favorilerim
       </h1>
 
       {isLoading ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {[...Array(8)].map((_, i) => <div key={i} className="animate-pulse rounded-2xl bg-gray-200 h-72" />)}
         </div>
       ) : items.length === 0 ? (
@@ -52,7 +52,7 @@ export default function WishlistPage() {
           <Link href="/shop" className="btn-primary mt-5 inline-flex">Ürünlere Göz At</Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {items.map((item: any) => {
             const product = item.product;
             const imgSrc = getImgSrc(product.thumbnail || product.images?.[0]?.url);

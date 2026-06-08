@@ -49,8 +49,8 @@ export default function CartPage() {
   }
 
   return (
-    <div className="container py-8">
-      <h1 className="mb-8 text-2xl font-bold">Sepetim ({items.length} ürün)</h1>
+    <div className="container py-5 sm:py-8">
+      <h1 className="mb-6 text-xl sm:text-2xl font-bold">Sepetim ({items.length} ürün)</h1>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Ürün listesi */}
@@ -58,12 +58,12 @@ export default function CartPage() {
           {items.map(item => {
             const imgSrc = getImageSrc(item.product.thumbnail);
             return (
-              <div key={item.id} className="card p-4 flex gap-4">
+              <div key={item.id} className="card p-3 sm:p-4 flex gap-3 sm:gap-4">
                 {/* Görsel */}
                 <Link href={`/product/${item.product.id}`} className="shrink-0">
-                  <div className="h-24 w-24 rounded-xl overflow-hidden bg-gray-50 border border-gray-100">
+                  <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-xl overflow-hidden bg-gray-50 border border-gray-100">
                     {imgSrc ? (
-                      <Image src={imgSrc} alt={item.product.name} width={96} height={96} className="h-full w-full object-cover" />
+                      <Image src={imgSrc} alt={item.product.name} width={80} height={80} className="h-full w-full object-cover" />
                     ) : (
                       <div className="flex h-full items-center justify-center text-2xl">📦</div>
                     )}
@@ -73,7 +73,7 @@ export default function CartPage() {
                 {/* Bilgi */}
                 <div className="flex flex-1 flex-col justify-between min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-sm font-semibold text-gray-800 line-clamp-2">{item.product.name}</h3>
+                    <h3 className="text-xs sm:text-sm font-semibold text-gray-800 line-clamp-2">{item.product.name}</h3>
                     <button
                       onClick={() => removeItem(item.id)}
                       className="shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"

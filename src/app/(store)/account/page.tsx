@@ -78,8 +78,8 @@ export default function AccountPage() {
   ];
 
   return (
-    <div className="container py-8">
-      <h1 className="mb-6 text-2xl font-bold">Hesabım</h1>
+    <div className="container py-4 sm:py-8">
+      <h1 className="mb-6 text-xl sm:text-2xl font-bold">Hesabım</h1>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         {/* Sidebar */}

@@ -79,7 +79,7 @@ export default function ProductCard({ product }: { product: Product }) {
         className={`absolute right-3 top-3 z-10 rounded-full p-1.5 shadow-sm transition-all ${
           inWishlist
             ? 'bg-red-50 text-red-500 opacity-100'
-            : 'bg-white text-gray-400 opacity-0 group-hover:opacity-100 hover:text-red-500'
+            : 'bg-white text-gray-400 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 hover:text-red-500'
         }`}
         aria-label="Favorilere ekle"
       >
@@ -113,12 +113,12 @@ export default function ProductCard({ product }: { product: Product }) {
       </Link>
 
       {/* İçerik */}
-      <div className="flex flex-1 flex-col p-4">
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
         {product.category && (
           <span className="text-xs text-gray-400 mb-1">{product.category.name}</span>
         )}
         <Link href={`/product/${product.slug}`}>
-          <h3 className="text-sm font-medium text-gray-800 line-clamp-2 hover:text-brand-600 transition-colors leading-snug">
+          <h3 className="text-xs sm:text-sm font-medium text-gray-800 line-clamp-2 hover:text-brand-600 transition-colors leading-snug">
             {product.name}
           </h3>
         </Link>
@@ -133,11 +133,11 @@ export default function ProductCard({ product }: { product: Product }) {
 
         <div className="mt-auto pt-3 flex items-center justify-between gap-2">
           <div>
-            <span className="text-base font-bold text-gray-900">
+            <span className="text-sm sm:text-base font-bold text-gray-900">
               {Number(product.price).toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
             </span>
             {product.comparePrice && (
-              <span className="ml-1.5 text-xs text-gray-400 line-through">
+              <span className="hidden sm:inline ml-1 text-xs text-gray-400 line-through">
                 {Number(product.comparePrice).toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
               </span>
             )}

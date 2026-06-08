@@ -159,9 +159,9 @@ export default function ShopPage() {
   return (
     <div className="container py-8">
       {/* Başlık + sıralama */}
-      <div className="mb-6 flex items-center justify-between gap-3">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-xl sm:text-2xl font-bold">
             {searchParams.get('search') ? `"${searchParams.get('search')}" için sonuçlar` :
              activeCategory ? (catData.find((c:any)=>c.slug===activeCategory) || catData.flatMap((c:any)=>c.children||[]).find((c:any)=>c.slug===activeCategory))?.name || 'Kategori Ürünleri' :
              searchParams.get('featured') ? '✨ Öne Çıkanlar' :
@@ -216,9 +216,9 @@ export default function ShopPage() {
         {/* Ürün grid */}
         <div className="flex-1 min-w-0">
           {isLoading ? (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {Array.from({ length: 12 }).map((_, i) => (
-                <div key={i} className="animate-pulse rounded-2xl bg-gray-200 h-72" />
+                <div key={i} className="animate-pulse rounded-2xl bg-gray-200 h-60 sm:h-72" />
               ))}
             </div>
           ) : products.length === 0 ? (
@@ -229,7 +229,7 @@ export default function ShopPage() {
               <button onClick={clearFilters} className="mt-4 btn-outline text-sm">Filtreleri Temizle</button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {products.map((product: any) => (
                 <ProductCard key={product.id} product={product} />
               ))}

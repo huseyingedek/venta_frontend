@@ -1,11 +1,10 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductCard from '@/components/product/ProductCard';
 
 export default function SectionCarousel({ products }: { products: any[] }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [showArrows, setShowArrows] = useState(false);
 
   const scroll = (dir: 'left' | 'right') => {
     if (!ref.current) return;
@@ -14,38 +13,40 @@ export default function SectionCarousel({ products }: { products: any[] }) {
   };
 
   return (
-    <div className="relative" onMouseEnter={() => setShowArrows(true)} onMouseLeave={() => setShowArrows(false)}>
-      {/* Sol ok */}
+    <div className="relative group/carousel">
+      {/* Sol ok — masaüstünde hover'da görünür */}
       <button
         onClick={() => scroll('left')}
-        className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 h-10 w-10 rounded-full bg-white shadow-lg border border-gray-100 flex items-center justify-center transition-opacity hover:bg-gray-50 ${showArrows ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-10 h-9 w-9 rounded-full bg-white shadow-lg border border-gray-100 items-center justify-center hover:bg-gray-50 opacity-0 group-hover/carousel:opacity-100 transition-opacity hidden sm:flex"
+        aria-label="Geri"
       >
-        <ChevronLeft size={20} className="text-gray-700" />
+        <ChevronLeft size={18} className="text-gray-700" />
       </button>
 
-      {/* Ürünler */}
+      {/* Scroll container — mobil: 2 kart, sm: 3 kart, lg: 4 kart */}
       <div
         ref={ref}
-        className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-1 pb-2"
+        className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth pb-2"
         style={{ scrollSnapType: 'x mandatory' }}
       >
         {products.map((product: any) => (
           <div
             key={product.id}
-            className="shrink-0"
-            style={{ width: 'calc(25% - 12px)', scrollSnapAlign: 'start', minWidth: '200px' }}
+            className="shrink-0 w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)]"
+            style={{ scrollSnapAlign: 'start' }}
           >
             <ProductCard product={product} />
           </div>
         ))}
       </div>
 
-      {/* Sağ ok */}
+      {/* Sağ ok — masaüstünde hover'da görünür */}
       <button
         onClick={() => scroll('right')}
-        className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 h-10 w-10 rounded-full bg-white shadow-lg border border-gray-100 flex items-center justify-center transition-opacity hover:bg-gray-50 ${showArrows ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-10 h-9 w-9 rounded-full bg-white shadow-lg border border-gray-100 items-center justify-center hover:bg-gray-50 opacity-0 group-hover/carousel:opacity-100 transition-opacity hidden sm:flex"
+        aria-label="İleri"
       >
-        <ChevronRight size={20} className="text-gray-700" />
+        <ChevronRight size={18} className="text-gray-700" />
       </button>
     </div>
   );

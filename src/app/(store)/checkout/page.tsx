@@ -135,9 +135,9 @@ export default function CheckoutPage() {
   const formatExpiry = (val: string) => val.replace(/\D/g, '').slice(0, 4).replace(/(\d{2})(\d)/, '$1/$2');
 
   return (
-    <div className="container py-8">
+    <div className="container py-4 sm:py-8">
       {/* Progress */}
-      <div className="mb-8 flex items-center justify-center gap-0">
+      <div className="mb-6 sm:mb-8 flex items-center justify-center gap-0">
         {steps.map((s, i) => (
           <div key={s.key} className="flex items-center">
             <div className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition-all ${

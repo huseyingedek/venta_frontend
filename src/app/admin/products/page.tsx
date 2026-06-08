@@ -1,49 +1,68 @@
 'use client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, Search, Eye, TrendingUp, TrendingDown, Minus, Star } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Eye, TrendingUp, TrendingDown, Minus, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import Image from 'next/image';
 
-const KARGO      = 149;          // xmltedarik Peşin Ödeme Sürat Kargo
-const BAYI_INO   = 0.30;         // %30 bayi indirimi
-const IYZICO_R   = 0.0249;
-const IYZICO_F   = 0.25;
+const BAYI_INO = 0.30;
+const IYZICO_R = 0.0249;
+const IYZICO_F = 0.25;
 
 /** Alış fiyatı: satış fiyatının %70'i */
 const alis = (satis: number) => satis * (1 - BAYI_INO);
 
-/** Net kar: satış - alış - kargo - iyzico */
+/** Net kar: satış - alış - iyzico (kargo karşı taraf öder) */
 const netKar = (satis: number) =>
-  satis - alis(satis) - KARGO - (satis * IYZICO_R + IYZICO_F);
+  satis - alis(satis) - (satis * IYZICO_R + IYZICO_F);
 
 const fmt = (v: number) =>
   v.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 2 });
 
 const statusColors: Record<string, string> = {
-  ACTIVE: 'bg-green-100 text-green-700',
-  INACTIVE: 'bg-gray-100 text-gray-600',
+  ACTIVE:       'bg-green-100 text-green-700',
+  INACTIVE:     'bg-gray-100 text-gray-600',
   OUT_OF_STOCK: 'bg-red-100 text-red-600',
-  DRAFT: 'bg-yellow-100 text-yellow-700',
+  DRAFT:        'bg-yellow-100 text-yellow-700',
 };
 const statusLabels: Record<string, string> = {
-  ACTIVE: 'Aktif', INACTIVE: 'Pasif', OUT_OF_STOCK: 'Stok Yok', DRAFT: 'Taslak'
+  ACTIVE: 'Aktif', INACTIVE: 'Pasif', OUT_OF_STOCK: 'Stok Yok', DRAFT: 'Taslak',
 };
+
+/* Sayfalama yardımcısı — max 7 buton göster */
+function pageNumbers(current: number, total: number): (number | '…')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | '…')[] = [1];
+  if (current > 3) pages.push('…');
+  for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
+  if (current < total - 2) pages.push('…');
+  pages.push(total);
+  return pages;
+}
 
 export default function AdminProductsPage() {
   const [search, setSearch]           = useState('');
   const [page, setPage]               = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
+  const [featuredFilter, setFeaturedFilter] = useState('');
   const [showPricing, setShowPricing] = useState(true);
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-products', { search, page, statusFilter }],
+    queryKey: ['admin-products', { search, page, statusFilter, featuredFilter }],
     queryFn: () =>
       api.get('/products', {
-        params: { search: search || undefined, page, limit: 20, status: statusFilter || undefined, sort: 'createdAt', order: 'desc' },
+        params: {
+          search:   search || undefined,
+          page,
+          limit:    20,
+          status:   statusFilter || 'ALL',   // boşsa tüm durumlar
+          featured: featuredFilter === 'featured' ? 'true' : featuredFilter === 'normal' ? 'false' : undefined,
+          sort:     'createdAt',
+          order:    'desc',
+        },
       }).then(r => r.data),
   });
 
@@ -57,8 +76,9 @@ export default function AdminProductsPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-products'] }); },
   });
 
-  const products    = data?.data || [];
-  const pagination  = data?.pagination;
+  const products   = data?.data || [];
+  const pagination = data?.pagination;
+  const colCount   = showPricing ? 9 : 7;
 
   return (
     <div className="space-y-5">
@@ -73,7 +93,7 @@ export default function AdminProductsPage() {
             <TrendingUp size={14} />
             {showPricing ? 'Fiyatları Gizle' : 'Alış/Kar Göster'}
           </button>
-<Link href="/admin/products/new" className="btn-primary gap-2">
+          <Link href="/admin/products/new" className="btn-primary gap-2">
             <Plus size={16} /> Ürün Ekle
           </Link>
         </div>
@@ -84,14 +104,15 @@ export default function AdminProductsPage() {
         <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 flex items-start gap-2">
           <span className="text-base shrink-0">ℹ️</span>
           <span>
-            <strong>Alış fiyatı</strong> = xmltedarik satış fiyatının <strong>%70'i</strong> (%30 bayi indirimi) ·
-            <strong> Net kar</strong> = Satış − Alış − Kargo (149 ₺) − İyzico komisyonu
+            <strong>Alış fiyatı</strong> = xmltedarik satış fiyatının <strong>%70'i</strong> (%30 bayi indirimi) ·{' '}
+            <strong>Net kar</strong> = Satış − Alış − İyzico komisyonu (kargo alıcı öder)
           </span>
         </div>
       )}
 
       {/* Filtreler */}
       <div className="card p-4 flex flex-wrap gap-3">
+        {/* Arama */}
         <div className="relative flex-1 min-w-48">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -101,13 +122,40 @@ export default function AdminProductsPage() {
             className="input pl-9"
           />
         </div>
-        <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }} className="input w-auto">
+
+        {/* Durum filtresi */}
+        <select
+          value={statusFilter}
+          onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
+          className="input w-auto"
+        >
           <option value="">Tüm Durumlar</option>
           <option value="ACTIVE">Aktif</option>
           <option value="INACTIVE">Pasif</option>
           <option value="OUT_OF_STOCK">Stok Yok</option>
           <option value="DRAFT">Taslak</option>
         </select>
+
+        {/* Öne çıkan filtresi */}
+        <div className="flex rounded-xl border border-gray-200 overflow-hidden text-sm font-medium">
+          {[
+            { value: '',         label: 'Tümü' },
+            { value: 'featured', label: '⭐ Öne Çıkanlar' },
+            { value: 'normal',   label: 'Normal' },
+          ].map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => { setFeaturedFilter(opt.value); setPage(1); }}
+              className={`px-3.5 py-2 transition-colors ${
+                featuredFilter === opt.value
+                  ? 'bg-amber-50 text-amber-700 border-x border-amber-200'
+                  : 'text-gray-500 hover:bg-gray-50'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Tablo */}
@@ -119,13 +167,11 @@ export default function AdminProductsPage() {
                 <th className="px-5 py-3">Ürün</th>
                 <th className="px-5 py-3">SKU</th>
                 <th className="px-5 py-3">Kategori</th>
-                {/* Satış fiyatı her zaman görünür */}
                 <th className="px-5 py-3">Satış Fiyatı</th>
-                {/* Alış/kar sadece showPricing açıkken */}
                 {showPricing && (
                   <>
                     <th className="px-5 py-3 text-blue-700 bg-blue-50/50">Alış Fiyatı</th>
-                    <th className="px-5 py-3 text-emerald-700 bg-emerald-50/50">Net Kar / Ürün</th>
+                    <th className="px-5 py-3 text-emerald-700 bg-emerald-50/50">Net Kar</th>
                   </>
                 )}
                 <th className="px-5 py-3">Stok</th>
@@ -137,7 +183,7 @@ export default function AdminProductsPage() {
               {isLoading ? (
                 [...Array(8)].map((_, i) => (
                   <tr key={i}>
-                    {[...Array(showPricing ? 9 : 7)].map((_, j) => (
+                    {[...Array(colCount)].map((_, j) => (
                       <td key={j} className="px-5 py-4">
                         <div className="animate-pulse h-4 bg-gray-100 rounded w-full" />
                       </td>
@@ -146,20 +192,20 @@ export default function AdminProductsPage() {
                 ))
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={showPricing ? 9 : 7} className="px-5 py-16 text-center text-gray-400">
+                  <td colSpan={colCount} className="px-5 py-16 text-center text-gray-400">
                     Ürün bulunamadı
                   </td>
                 </tr>
               ) : (
                 products.map((product: any) => {
-                  const satis  = Number(product.price);
+                  const satis     = Number(product.price);
                   const alisFiyat = alis(satis);
-                  const kar    = netKar(satis);
-                  const karPct = satis > 0 ? (kar / satis) * 100 : 0;
+                  const kar       = netKar(satis);
+                  const karPct    = satis > 0 ? (kar / satis) * 100 : 0;
 
                   return (
-                    <tr key={product.id} className="hover:bg-gray-50/50 transition-colors">
-                      {/* Ürün adı */}
+                    <tr key={product.id} className={`hover:bg-gray-50/50 transition-colors ${product.isFeatured ? 'bg-amber-50/30' : ''}`}>
+                      {/* Ürün */}
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 rounded-lg overflow-hidden bg-gray-100 shrink-0">
@@ -170,17 +216,17 @@ export default function AdminProductsPage() {
                               />
                             ) : <div className="flex h-full items-center justify-center text-lg">📦</div>}
                           </div>
-                          <span className="font-medium text-gray-800 line-clamp-1 max-w-[200px]">{product.name}</span>
+                          <div className="flex items-center gap-1.5">
+                            {product.isFeatured && <Star size={12} className="text-amber-400 shrink-0" fill="currentColor" />}
+                            <span className="font-medium text-gray-800 line-clamp-1 max-w-[200px]">{product.name}</span>
+                          </div>
                         </div>
                       </td>
 
                       <td className="px-5 py-3 text-gray-500 font-mono text-xs">{product.sku || '—'}</td>
                       <td className="px-5 py-3 text-gray-600">{product.category?.name || '—'}</td>
-
-                      {/* Satış fiyatı */}
                       <td className="px-5 py-3 font-bold text-gray-900">{fmt(satis)}</td>
 
-                      {/* Alış fiyatı */}
                       {showPricing && (
                         <td className="px-5 py-3 bg-blue-50/30">
                           <div className="flex flex-col">
@@ -190,18 +236,13 @@ export default function AdminProductsPage() {
                         </td>
                       )}
 
-                      {/* Net kar */}
                       {showPricing && (
                         <td className="px-5 py-3 bg-emerald-50/30">
                           <div className="flex flex-col">
                             <div className="flex items-center gap-1">
-                              {kar > 0 ? (
-                                <TrendingUp size={13} className="text-emerald-600" />
-                              ) : kar === 0 ? (
-                                <Minus size={13} className="text-gray-400" />
-                              ) : (
-                                <TrendingDown size={13} className="text-red-500" />
-                              )}
+                              {kar > 0 ? <TrendingUp size={13} className="text-emerald-600" />
+                                : kar === 0 ? <Minus size={13} className="text-gray-400" />
+                                : <TrendingDown size={13} className="text-red-500" />}
                               <span className={`font-bold text-sm ${kar > 0 ? 'text-emerald-700' : kar < 0 ? 'text-red-600' : 'text-gray-500'}`}>
                                 {fmt(kar)}
                               </span>
@@ -213,24 +254,20 @@ export default function AdminProductsPage() {
                         </td>
                       )}
 
-                      {/* Stok */}
                       <td className="px-5 py-3">
                         <span className={`font-medium ${product.stock <= 5 ? 'text-red-600' : 'text-gray-700'}`}>
                           {product.stock}
                         </span>
                       </td>
 
-                      {/* Durum */}
                       <td className="px-5 py-3">
                         <span className={`badge ${statusColors[product.status]}`}>
                           {statusLabels[product.status]}
                         </span>
                       </td>
 
-                      {/* İşlemler */}
                       <td className="px-5 py-3">
                         <div className="flex items-center justify-end gap-1">
-                          {/* Öne çıkar toggle */}
                           <button
                             onClick={() => toggleFeatured.mutate(product.id)}
                             title={product.isFeatured ? 'Öne çıkanlardan kaldır' : 'Öne çıkar'}
@@ -262,20 +299,45 @@ export default function AdminProductsPage() {
 
         {/* Sayfalama */}
         {pagination && pagination.pages > 1 && (
-          <div className="flex items-center justify-between border-t px-5 py-3 text-sm text-gray-500">
-            <span>{pagination.total} ürün</span>
-            <div className="flex gap-1">
-              {[...Array(pagination.pages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setPage(i + 1)}
-                  className={`h-7 w-7 rounded text-xs font-medium transition-colors ${
-                    page === i + 1 ? 'bg-brand-600 text-white' : 'hover:bg-gray-100'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
+          <div className="flex items-center justify-between border-t px-5 py-3 text-sm">
+            <span className="text-gray-500">
+              Toplam <strong>{pagination.total}</strong> ürün · Sayfa {page}/{pagination.pages}
+            </span>
+            <div className="flex items-center gap-1">
+              {/* Önceki */}
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft size={15} />
+              </button>
+
+              {/* Sayfa numaraları */}
+              {pageNumbers(page, pagination.pages).map((p, i) =>
+                p === '…' ? (
+                  <span key={`sep-${i}`} className="px-1 text-gray-400 text-xs">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`h-8 min-w-[2rem] rounded-lg px-2 text-xs font-medium transition-colors ${
+                      page === p ? 'bg-brand-600 text-white' : 'hover:bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+
+              {/* Sonraki */}
+              <button
+                onClick={() => setPage(p => Math.min(pagination.pages, p + 1))}
+                disabled={page === pagination.pages}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight size={15} />
+              </button>
             </div>
           </div>
         )}

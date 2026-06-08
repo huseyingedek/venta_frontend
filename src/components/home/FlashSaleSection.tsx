@@ -35,7 +35,7 @@ function Digit({ v }: { v: string }) {
     <div className="flex flex-col items-center">
       <div className="flex gap-0.5">
         {v.split('').map((d, i) => (
-          <span key={i} className="flex h-9 w-7 items-center justify-center rounded-lg bg-white/15 text-xl font-black text-white tabular-nums">
+          <span key={i} className="flex h-8 w-6 sm:h-9 sm:w-7 items-center justify-center rounded-lg bg-white/15 text-lg sm:text-xl font-black text-white tabular-nums">
             {d}
           </span>
         ))}
@@ -50,22 +50,22 @@ export default function FlashSaleSection({ products }: Props) {
   if (products.length === 0) return null;
 
   return (
-    <section className="py-12" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)' }}>
+    <section className="py-8 sm:py-12" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)' }}>
       <div className="container">
         {/* Başlık + sayaç */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 shadow-lg shadow-orange-500/30">
               <Zap size={20} className="text-white" fill="white" />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-white">Günün Fırsatı</h2>
+              <h2 className="text-xl sm:text-2xl font-black text-white">Günün Fırsatı</h2>
               <p className="text-sm text-white/50">Kampanya bitimine kalan süre</p>
             </div>
           </div>
 
           {/* Geri sayım */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <Digit v={h} />
             <span className="text-2xl font-black text-orange-400 pb-1">:</span>
             <Digit v={m} />
