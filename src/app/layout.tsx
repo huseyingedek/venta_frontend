@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   title: { default: 'Venta Premium | Kalite ve Güvenin Adresi', template: '%s | Venta Premium' },
   description: 'Venta Premium ile binlerce ürün arasından güvenle alışveriş yapın. Hızlı kargo, kolay iade, güvenli ödeme.',
   keywords: ['e-ticaret', 'online alışveriş', 'venta premium', 'güvenilir alışveriş'],
+  verification: {
+    google: 'Jem315IPt1aimuKAMfE0crsP4aOoqWhvdfqtYXaRB2I',
+  },
   openGraph: {
     siteName: 'Venta Premium',
     type: 'website',
