@@ -15,7 +15,7 @@ const statusColors: Record<string, string> = {
   PAYMENT_FAILED: 'bg-red-100 text-red-700', REFUNDED: 'bg-pink-100 text-pink-700',
 };
 const statusLabels: Record<string, string> = {
-  PENDING: '⏳ Bekliyor', CONFIRMED: '✅ Onaylandı', PREPARING: '📦 Hazırlanıyor',
+  PENDING: '⏳ Ödeme Bekleniyor', CONFIRMED: '✅ Ödeme Alındı', PREPARING: '📦 Hazırlanıyor',
   SHIPPED: '🚚 Kargoda', DELIVERED: '✓ Teslim Edildi', CANCELLED: '✗ İptal',
   PAYMENT_FAILED: '✗ Ödeme Başarısız', REFUNDED: '↩ İade Edildi',
 };

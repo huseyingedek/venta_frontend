@@ -357,7 +357,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
           {/* Güvenceler */}
           <div className="grid grid-cols-3 gap-2 rounded-2xl bg-gray-50 p-3 sm:p-4">
             {[
-              { icon: Truck, label: 'Ücretsiz Kargo', sub: '500 TL üzeri' },
+              { icon: Truck, label: 'Hızlı Teslimat', sub: '3-7 iş günü' },
               { icon: Shield, label: 'Güvenli Ödeme', sub: 'İYZİCO güvencesi' },
               { icon: RefreshCw, label: 'Kolay İade', sub: '14 gün içinde' },
             ].map(item => (

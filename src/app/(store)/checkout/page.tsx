@@ -6,7 +6,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { CreditCard, Plus, MapPin, ChevronRight, Lock } from 'lucide-react';
+import { Plus, MapPin, ChevronRight, MessageCircle } from 'lucide-react';
 import api from '@/lib/api';
 import { useCartStore } from '@/store/cart.store';
 import { useAuthStore } from '@/store/auth.store';
@@ -23,16 +23,7 @@ const addressSchema = z.object({
   fullAddress: z.string().min(10),
 });
 
-const paymentSchema = z.object({
-  cardHolderName: z.string().min(3, 'Kart sahibi adı gerekli'),
-  cardNumber: z.string().regex(/^\d{16}$/, '16 haneli kart numarası girin'),
-  expireMonth: z.string().regex(/^(0[1-9]|1[0-2])$/, 'Geçersiz ay'),
-  expireYear: z.string().regex(/^\d{2}$/, 'Geçersiz yıl'),
-  cvc: z.string().regex(/^\d{3,4}$/, 'Geçersiz CVC'),
-  installment: z.number().default(1),
-});
-
-type Step = 'address' | 'payment' | 'review';
+type Step = 'address' | 'review';
 
 export default function CheckoutPage() {
   const [step, setStep] = useState<Step>('address');
@@ -49,20 +40,14 @@ export default function CheckoutPage() {
   });
 
   const addressForm = useForm({ resolver: zodResolver(addressSchema) });
-  const paymentForm = useForm({ resolver: zodResolver(paymentSchema) });
 
   const [giftPackage, setGiftPackage] = useState(false);
 
-  // ── Maliyet hesabı ──────────────────────────────────────────────────────
-  const IYZICO_RATE      = 0.0249;
-  const IYZICO_FIXED     = 0.25;
   const GIFT_PACKAGE_FEE = 20;
-
-  const subtotal   = totalPrice();
-  const shipping   = 149;
-  const giftFee    = giftPackage ? GIFT_PACKAGE_FEE : 0;
-  const total      = subtotal + shipping + giftFee;
-
+  const SHIPPING_COST = 149;
+  const subtotal = totalPrice();
+  const giftFee = giftPackage ? GIFT_PACKAGE_FEE : 0;
+  const total = subtotal + SHIPPING_COST + giftFee;
 
   // Yeni adres kaydet
   const saveAddress = useMutation({
@@ -71,33 +56,27 @@ export default function CheckoutPage() {
       setSelectedAddressId(res.data.data.id);
       await refetchAddresses();
       setShowNewAddress(false);
-      setStep('payment');
+      setStep('review');
       toast.success('Adres kaydedildi!');
     },
   });
 
-  // Sipariş oluştur + ödeme
+  // Sipariş oluştur
   const placeOrder = useMutation({
-    mutationFn: async (paymentData: any) => {
+    mutationFn: async () => {
       const { data: orderRes } = await api.post('/orders', {
         addressId: selectedAddressId,
-        paymentMethod: 'CREDIT_CARD',
+        paymentMethod: 'BANK_TRANSFER',
       });
-      const orderId = orderRes.data.id;
-
-      const { data: payRes } = await api.post('/payment/initiate', {
-        orderId,
-        ...paymentData,
-      });
-      return { order: orderRes.data, payment: payRes };
+      return orderRes.data;
     },
-    onSuccess: ({ order }) => {
+    onSuccess: (order) => {
       clearCart();
       router.push(`/checkout/success?orderId=${order.id}`);
       toast.success('Siparişiniz alındı!');
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Ödeme başarısız.');
+      toast.error(err.response?.data?.message || 'Sipariş oluşturulamadı.');
     },
   });
 
@@ -127,12 +106,8 @@ export default function CheckoutPage() {
 
   const steps = [
     { key: 'address', label: 'Teslimat Adresi', num: 1 },
-    { key: 'payment', label: 'Ödeme', num: 2 },
-    { key: 'review', label: 'Özet', num: 3 },
+    { key: 'review', label: 'Sipariş Özeti', num: 2 },
   ];
-
-  const formatCardNumber = (val: string) => val.replace(/\D/g, '').slice(0, 16);
-  const formatExpiry = (val: string) => val.replace(/\D/g, '').slice(0, 4).replace(/(\d{2})(\d)/, '$1/$2');
 
   return (
     <div className="container py-4 sm:py-8">
@@ -227,7 +202,7 @@ export default function CheckoutPage() {
                     <Plus size={16} /> Yeni Adres Ekle
                   </button>
                   <button
-                    onClick={() => { if (selectedAddressId) setStep('payment'); else toast.error('Lütfen bir adres seçin.'); }}
+                    onClick={() => { if (selectedAddressId) setStep('review'); else toast.error('Lütfen bir adres seçin.'); }}
                     disabled={!selectedAddressId}
                     className="btn-primary w-full py-3"
                   >
@@ -238,80 +213,7 @@ export default function CheckoutPage() {
             </div>
           )}
 
-          {/* ADIM 2 — Ödeme */}
-          {step === 'payment' && (
-            <div className="card p-6">
-              <h2 className="mb-5 text-lg font-bold flex items-center gap-2">
-                <CreditCard size={20} className="text-brand-600" /> Kart Bilgileri
-              </h2>
-
-              <form
-                onSubmit={paymentForm.handleSubmit(d => {
-                  setStep('review');
-                })}
-                className="space-y-4"
-              >
-                <div>
-                  <label className="label">Kart Üzerindeki İsim</label>
-                  <input {...paymentForm.register('cardHolderName')} placeholder="AD SOYAD" className="input uppercase" />
-                  {paymentForm.formState.errors.cardHolderName && (
-                    <p className="mt-1 text-xs text-red-500">{paymentForm.formState.errors.cardHolderName.message as string}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="label">Kart Numarası</label>
-                  <input
-                    {...paymentForm.register('cardNumber')}
-                    placeholder="0000 0000 0000 0000"
-                    maxLength={16}
-                    className="input tracking-widest font-mono"
-                    onChange={e => paymentForm.setValue('cardNumber', formatCardNumber(e.target.value))}
-                  />
-                  {paymentForm.formState.errors.cardNumber && (
-                    <p className="mt-1 text-xs text-red-500">{paymentForm.formState.errors.cardNumber.message as string}</p>
-                  )}
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="label">Ay</label>
-                    <input {...paymentForm.register('expireMonth')} placeholder="MM" maxLength={2} className="input text-center" />
-                  </div>
-                  <div>
-                    <label className="label">Yıl</label>
-                    <input {...paymentForm.register('expireYear')} placeholder="YY" maxLength={2} className="input text-center" />
-                  </div>
-                  <div>
-                    <label className="label">CVC</label>
-                    <input {...paymentForm.register('cvc')} placeholder="•••" maxLength={4} className="input text-center" />
-                  </div>
-                </div>
-
-                {/* Taksit */}
-                <div>
-                  <label className="label">Taksit Seçeneği</label>
-                  <select {...paymentForm.register('installment', { valueAsNumber: true })} className="input">
-                    <option value={1}>Tek Çekim</option>
-                    <option value={2}>2 Taksit</option>
-                    <option value={3}>3 Taksit</option>
-                    <option value={6}>6 Taksit</option>
-                    <option value={9}>9 Taksit</option>
-                    <option value={12}>12 Taksit</option>
-                  </select>
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  <button type="button" onClick={() => setStep('address')} className="btn-outline">← Geri</button>
-                  <button type="submit" className="btn-primary flex-1 py-3">Özeti Gör →</button>
-                </div>
-
-                <p className="text-center text-xs text-gray-400 flex items-center justify-center gap-1">
-                  <Lock size={12} /> Ödeme bilgileriniz İYZİCO güvencesi ile şifrelenmektedir
-                </p>
-              </form>
-            </div>
-          )}
-
-          {/* ADIM 3 — Özet */}
+          {/* ADIM 2 — Özet ve Sipariş Ver */}
           {step === 'review' && (
             <div className="card p-6">
               <h2 className="mb-5 text-lg font-bold">Sipariş Özeti</h2>
@@ -350,14 +252,14 @@ export default function CheckoutPage() {
                 <span className="text-sm font-semibold text-brand-600">+{GIFT_PACKAGE_FEE} TL</span>
               </label>
 
-              <div className="border-t pt-4 space-y-2 text-sm mb-6">
+              <div className="border-t pt-4 space-y-2 text-sm mb-5">
                 <div className="flex justify-between text-gray-600">
                   <span>Ürünler Toplamı</span>
                   <span>{subtotal.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Kargo</span>
-                  <span className="italic text-gray-400">Teslimat sırasında</span>
+                  <span>{SHIPPING_COST.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</span>
                 </div>
                 {giftPackage && (
                   <div className="flex justify-between text-gray-600">
@@ -370,18 +272,25 @@ export default function CheckoutPage() {
                   <span>{total.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</span>
                 </div>
                 <p className="text-xs text-gray-400 text-center">KDV Dahildir</p>
-                {/* Sadece görsel bilgi — müşteriye gösterilmiyor ama bizim için önemli */}
+              </div>
+
+              {/* Ödeme bilgisi */}
+              <div className="rounded-xl bg-green-50 border border-green-200 p-4 mb-5 flex items-start gap-3">
+                <MessageCircle size={20} className="text-green-600 shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-semibold text-green-800 mb-1">WhatsApp ile Ödeme</p>
+                  <p className="text-green-700">Siparişiniz oluşturulunca sizinle WhatsApp üzerinden iletişime geçeceğiz ve IBAN bilgilerimizi ileteceğiz.</p>
+                </div>
               </div>
 
               <div className="flex gap-3">
-                <button onClick={() => setStep('payment')} className="btn-outline">← Geri</button>
+                <button onClick={() => setStep('address')} className="btn-outline">← Geri</button>
                 <button
-                  onClick={() => placeOrder.mutate(paymentForm.getValues())}
+                  onClick={() => placeOrder.mutate()}
                   disabled={placeOrder.isPending}
                   className="btn-primary flex-1 py-3 gap-2"
                 >
-                  <Lock size={16} />
-                  {placeOrder.isPending ? 'İşleniyor...' : `${total.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })} Öde`}
+                  {placeOrder.isPending ? 'Sipariş oluşturuluyor...' : '✓ Siparişi Tamamla'}
                 </button>
               </div>
             </div>
@@ -408,7 +317,7 @@ export default function CheckoutPage() {
             </div>
             <div className="flex justify-between text-gray-500">
               <span>Kargo</span>
-              <span>149,00 TL</span>
+              <span>{SHIPPING_COST.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</span>
             </div>
             {giftPackage && (
               <div className="flex justify-between text-gray-500">

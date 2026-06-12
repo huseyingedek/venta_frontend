@@ -83,7 +83,7 @@ export default function PrivacyPage() {
             <li>Verilerin silinmesini veya yok edilmesini isteme</li>
             <li>İşlenen verilerin otomatik sistemler aracılığıyla analiz edilmesi sonucu aleyhinize çıkan kararı itiraz etme</li>
           </ul>
-          <p className="mt-3">Bu haklarınızı kullanmak için <a href="mailto:info@ventapremium.com" className="text-brand-600 hover:underline">info@ventapremium.com</a> adresine e-posta gönderebilirsiniz.</p>
+          <p className="mt-3">Bu haklarınızı kullanmak için <a href="mailto:destek@ventapremium.com.tr" className="text-brand-600 hover:underline">destek@ventapremium.com.tr</a> adresine e-posta gönderebilirsiniz.</p>
         </section>
 
         <section>
@@ -91,7 +91,7 @@ export default function PrivacyPage() {
           <p>Gizlilik politikamız hakkında sorularınız için:</p>
           <div className="mt-3 rounded-xl bg-gray-50 p-4 text-sm space-y-1">
             <p><strong>Venta Premium</strong></p>
-            <p>E-posta: <a href="mailto:info@ventapremium.com" className="text-brand-600">info@ventapremium.com</a></p>
+            <p>E-posta: <a href="mailto:destek@ventapremium.com.tr" className="text-brand-600">destek@ventapremium.com.tr</a></p>
           </div>
         </section>
 

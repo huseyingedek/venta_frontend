@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Mail, Phone, MapPin, Instagram, Twitter, Facebook } from 'lucide-react';
 
 export default function Footer() {
@@ -37,10 +38,10 @@ export default function Footer() {
             <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-white">Kurumsal</h4>
             <ul className="space-y-2 text-sm">
               <li><Link href="/about" className="hover:text-brand-400 transition-colors">Hakkımızda</Link></li>
-              <li><Link href="/contact" className="hover:text-brand-400 transition-colors">İletişim</Link></li>
               <li><Link href="/privacy" className="hover:text-brand-400 transition-colors">Gizlilik Politikası</Link></li>
               <li><Link href="/returns" className="hover:text-brand-400 transition-colors">İade & Değişim</Link></li>
-              <li><Link href="/shipping" className="hover:text-brand-400 transition-colors">Kargo Bilgileri</Link></li>
+              <li><Link href="/shipping" className="hover:text-brand-400 transition-colors">Teslimat Bilgileri</Link></li>
+              <li><Link href="/mesafeli-satis" className="hover:text-brand-400 transition-colors">Mesafeli Satış Sözleşmesi</Link></li>
             </ul>
           </div>
 
@@ -49,20 +50,34 @@ export default function Footer() {
             <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-white">İletişim</h4>
             <ul className="space-y-3 text-sm">
               <li className="flex gap-2.5"><Phone size={15} className="mt-0.5 shrink-0 text-brand-400" /><span>0850 000 00 00</span></li>
-              <li className="flex gap-2.5"><Mail size={15} className="mt-0.5 shrink-0 text-brand-400" /><span>destek@ventapremium.com</span></li>
+              <li className="flex gap-2.5"><Mail size={15} className="mt-0.5 shrink-0 text-brand-400" /><span>destek@ventapremium.com.tr</span></li>
               <li className="flex gap-2.5"><MapPin size={15} className="mt-0.5 shrink-0 text-brand-400" /><span>İstanbul, Türkiye</span></li>
             </ul>
           </div>
         </div>
       </div>
 
+      {/* Ödeme Logoları */}
       <div className="border-t border-white/10">
-        <div className="container flex flex-col items-center justify-between gap-3 py-5 text-xs text-gray-500 md:flex-row">
-          <p>© {new Date().getFullYear()} Venta Premium. Tüm hakları saklıdır.</p>
-          <div className="flex gap-4">
-            <Link href="/privacy" className="hover:text-gray-300">Gizlilik</Link>
-            <Link href="/terms" className="hover:text-gray-300">Kullanım Koşulları</Link>
-            <Link href="/cookies" className="hover:text-gray-300">Çerezler</Link>
+        <div className="container py-5">
+          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+            <p className="text-xs text-gray-500">© {new Date().getFullYear()} Venta Premium. Tüm hakları saklıdır.</p>
+            {/* Ödeme yöntemi logoları */}
+            <div className="flex items-center justify-center rounded-xl bg-white px-4 py-2">
+              <Image
+                src="/logo_band_colored@1X.png"
+                alt="iyzico ile güvenli ödeme - Visa, Mastercard"
+                width={240}
+                height={32}
+                className="h-8 w-auto object-contain"
+              />
+            </div>
+          </div>
+          <div className="flex flex-wrap justify-center gap-4 mt-3 text-xs text-gray-500 md:justify-start">
+            <Link href="/privacy" className="hover:text-gray-300">Gizlilik Politikası</Link>
+            <Link href="/mesafeli-satis" className="hover:text-gray-300">Mesafeli Satış Sözleşmesi</Link>
+            <Link href="/returns" className="hover:text-gray-300">İade & Değişim</Link>
+            <Link href="/shipping" className="hover:text-gray-300">Teslimat</Link>
           </div>
         </div>
       </div>
