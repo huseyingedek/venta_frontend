@@ -1,8 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Shield, Truck, RefreshCw, Star, MessageCircle, Tag, Zap, Sparkles, TrendingUp } from 'lucide-react';
+import { ArrowRight, Shield, Truck, RefreshCw, Star, Tag, Zap, Sparkles, TrendingUp } from 'lucide-react';
 import ProductCard from '@/components/product/ProductCard';
-import HeroSlider from '@/components/layout/HeroSlider';
 import FlashSaleSection from '@/components/home/FlashSaleSection';
 import SectionCarousel from '@/components/home/SectionCarousel';
 
@@ -119,32 +118,9 @@ export default async function HomePage() {
     getHomepageSections(),
   ]);
 
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '905000000000';
-
   return (
     <div className="bg-gray-50">
 
-      {/* ── 1. HERO ──────────────────────────────────────────────── */}
-      <HeroSlider featuredProduct={discountProducts[0] || null} />
-
-      {/* ── 2. GÜVEN ROZET ÇUBUĞU ───────────────────────────────── */}
-      <section className="bg-white border-b shadow-sm">
-        <div className="container">
-          <div className="grid grid-cols-2 gap-0 divide-x divide-gray-100 md:grid-cols-4">
-            {features.map((f) => (
-              <div key={f.title} className="flex items-center gap-3 px-4 py-4 md:px-6 md:py-5">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50">
-                  <f.icon size={19} className="text-brand-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">{f.title}</p>
-                  <p className="text-xs text-gray-400 leading-snug mt-0.5 hidden sm:block">{f.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ── 3. ÖNE ÇIKAN ÜRÜNLER ────────────────────────────────── */}
       {featuredProducts.length > 0 && (
@@ -479,16 +455,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── WhatsApp Floating ────────────────────────────────────── */}
-      <a
-        href={`https://wa.me/${whatsappNumber}?text=Merhaba%2C%20sipari%C5%9F%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum.`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-green-500 text-white shadow-lg hover:bg-green-600 transition-all hover:scale-110"
-        aria-label="WhatsApp"
-      >
-        <MessageCircle size={26} fill="white" />
-      </a>
     </div>
   );
 }

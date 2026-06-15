@@ -97,7 +97,7 @@ export default function WishlistPage() {
                       )}
                     </div>
                     <button
-                      onClick={() => addItem(product.id)}
+                      onClick={() => addItem(product.id, 1, undefined, { id: product.id, name: product.name, price: Number(product.price), thumbnail: product.thumbnail ?? null, stock: product.stock })}
                       disabled={product.stock === 0}
                       className="rounded-xl bg-brand-600 p-2.5 text-white hover:bg-brand-700 transition-colors disabled:opacity-40"
                     >

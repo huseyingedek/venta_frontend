@@ -31,9 +31,45 @@ interface RegisterData {
   phone?: string;
 }
 
+/** Login/register sonrası local wishlist → server wishlist merge */
+async function mergeLocalWishlist() {
+  try {
+    const raw = localStorage.getItem('venta-wishlist');
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    const localItems: Array<{ productId: string }> = parsed?.state?.items || [];
+    if (!localItems.length) return;
+    await Promise.allSettled(
+      localItems.map(item => api.post('/users/wishlist', { productId: item.productId }))
+    );
+    localStorage.removeItem('venta-wishlist');
+  } catch {}
+}
+
+/** Login/register sonrası local cart → server cart merge */
+async function mergeLocalCart() {
+  try {
+    const raw = localStorage.getItem('venta-cart');
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    const localItems: Array<{ productId: string; quantity: number }> = parsed?.state?.items || [];
+    if (!localItems.length) return;
+
+    // Her local ürünü sunucu sepetine ekle
+    await Promise.allSettled(
+      localItems.map(item =>
+        api.post('/cart/items', { productId: item.productId, quantity: item.quantity })
+      )
+    );
+
+    // Local cart'ı temizle (artık sunucuda)
+    localStorage.removeItem('venta-cart');
+  } catch {}
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       accessToken: null,
       isAuthenticated: false,
@@ -48,6 +84,9 @@ export const useAuthStore = create<AuthState>()(
           localStorage.setItem('accessToken', accessToken);
           localStorage.setItem('refreshToken', refreshToken);
           set({ user, accessToken, isAuthenticated: true });
+          // Guest sepet + favorilerini server'a taşı
+          await mergeLocalCart();
+          await mergeLocalWishlist();
         } finally {
           set({ isLoading: false });
         }
@@ -61,6 +100,9 @@ export const useAuthStore = create<AuthState>()(
           localStorage.setItem('accessToken', accessToken);
           localStorage.setItem('refreshToken', refreshToken);
           set({ user, accessToken, isAuthenticated: true });
+          // Guest sepet + favorilerini server'a taşı
+          await mergeLocalCart();
+          await mergeLocalWishlist();
         } finally {
           set({ isLoading: false });
         }

@@ -8,12 +8,13 @@ import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'next/navigation';
 
 export default function CartPage() {
-  const { items, updateItem, removeItem, clearCart, fetchCart, totalPrice, isLoading } = useCartStore();
+  const { items, updateItem, removeItem, clearCart, fetchCart, totalPrice } = useCartStore();
   const { isAuthenticated } = useAuthStore();
   const router = useRouter();
   const [coupon, setCoupon] = useState('');
 
   useEffect(() => {
+    // Üye ise sunucu sepetini çek; guest için persist'ten gelen local items zaten var
     if (isAuthenticated) fetchCart();
   }, [isAuthenticated]);
 
@@ -25,17 +26,6 @@ export default function CartPage() {
   const subtotal = totalPrice();
   const shipping = 149;
   const total = subtotal + shipping;
-
-  if (!isAuthenticated) {
-    return (
-      <div className="container py-20 text-center">
-        <ShoppingBag size={56} className="mx-auto mb-4 text-gray-300" />
-        <h2 className="text-xl font-bold text-gray-700">Sepeti görüntülemek için giriş yapın</h2>
-        <p className="mt-2 text-gray-500">Alışverişe devam etmek için hesabınıza giriş yapın.</p>
-        <Link href="/auth/login" className="btn-primary mt-6 inline-flex">Giriş Yap</Link>
-      </div>
-    );
-  }
 
   if (items.length === 0) {
     return (
@@ -60,7 +50,7 @@ export default function CartPage() {
             return (
               <div key={item.id} className="card p-3 sm:p-4 flex gap-3 sm:gap-4">
                 {/* Görsel */}
-                <Link href={`/product/${item.product.id}`} className="shrink-0">
+                <Link href={`/product/${item.product.slug ?? item.product.id}`} className="shrink-0">
                   <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-xl overflow-hidden bg-gray-50 border border-gray-100">
                     {imgSrc ? (
                       <Image src={imgSrc} alt={item.product.name} width={80} height={80} className="h-full w-full object-cover" />
@@ -86,7 +76,10 @@ export default function CartPage() {
                     {/* Adet */}
                     <div className="flex items-center rounded-lg border border-gray-200 overflow-hidden">
                       <button
-                        onClick={() => updateItem(item.id, item.quantity - 1)}
+                        onClick={() => {
+                          if (item.quantity <= 1) removeItem(item.id);
+                          else updateItem(item.id, item.quantity - 1);
+                        }}
                         className="px-3 py-1.5 hover:bg-gray-50 transition-colors text-gray-600"
                       >
                         <Minus size={13} />
@@ -170,10 +163,8 @@ export default function CartPage() {
           </div>
 
           {/* Güven rozetleri */}
-          <div className="rounded-2xl bg-gray-50 p-4 text-xs text-gray-500 text-center space-y-1">
+          <div className="rounded-2xl bg-gray-50 p-4 text-xs text-gray-500 text-center">
             <p>🔒 256-bit SSL şifreleme ile güvenli ödeme</p>
-            <p>🚚 Hızlı teslimat — Sürat Kargo</p>
-            <p>↩️ 14 gün içinde ücretsiz iade</p>
           </div>
         </div>
       </div>

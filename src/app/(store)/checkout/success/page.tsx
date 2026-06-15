@@ -3,17 +3,32 @@ import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { CheckCircle, Package, Home, Loader2, ShoppingBag } from 'lucide-react';
+import { CheckCircle, Package, Loader2, ShoppingBag } from 'lucide-react';
 import api from '@/lib/api';
+import { useAuthStore } from '@/store/auth.store';
 
 function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
+  const orderNumber = searchParams.get('orderNumber');
+  const { isAuthenticated } = useAuthStore();
 
+  // Üye ise ID ile çek, guest ise orderNumber ile çek
   const { data: order } = useQuery({
-    queryKey: ['order-success', orderId],
-    queryFn: () => api.get(`/orders/${orderId}`).then(r => r.data.data),
-    enabled: !!orderId,
+    queryKey: ['order-success', orderId, orderNumber],
+    queryFn: async () => {
+      if (isAuthenticated && orderId) {
+        const r = await api.get(`/orders/${orderId}`);
+        return r.data.data;
+      }
+      if (orderNumber) {
+        const r = await api.get(`/orders/by-number/${orderNumber}`);
+        return r.data.data;
+      }
+      return null;
+    },
+    enabled: !!(orderId || orderNumber),
+    retry: false,
   });
 
   return (
@@ -62,9 +77,15 @@ function CheckoutSuccessContent() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <Link href="/account/orders" className="btn-primary gap-2 justify-center">
-            <Package size={16} /> Siparişlerimi Görüntüle
-          </Link>
+          {isAuthenticated ? (
+            <Link href="/account/orders" className="btn-primary gap-2 justify-center">
+              <Package size={16} /> Siparişlerimi Görüntüle
+            </Link>
+          ) : (
+            <Link href="/auth/register" className="btn-primary gap-2 justify-center">
+              <Package size={16} /> Üye Ol — Siparişini Takip Et
+            </Link>
+          )}
           <Link href="/shop" className="btn-outline gap-2 justify-center">
             <ShoppingBag size={16} /> Alışverişe Devam Et
           </Link>

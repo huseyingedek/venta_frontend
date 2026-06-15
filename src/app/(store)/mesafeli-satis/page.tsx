@@ -77,7 +77,7 @@ export default function MesafeliSatisPage() {
           </p>
           <p className="mb-2">Cayma hakkını kullanmak için:</p>
           <ul className="space-y-1 ml-4 list-disc">
-            <li>destek@ventapremium.com.tr adresine e-posta gönderin veya WhatsApp üzerinden bize ulaşın.</li>
+            <li>destek@ventapremium.com.tr adresine e-posta gönderin veya 0535 467 68 01 numaralı WhatsApp hattımızdan bize ulaşın.</li>
             <li>Ürün orijinal ambalajında, kullanılmamış ve hasarsız olmalıdır.</li>
             <li>Kargo ücreti Alıcı'ya aittir.</li>
             <li>İade onaylandıktan sonra <strong>14 iş günü</strong> içinde ödeme iade edilir.</li>

@@ -1,12 +1,12 @@
 'use client';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, MapPin, ChevronRight, CreditCard, Lock, ShieldCheck } from 'lucide-react';
+import { Plus, MapPin, ChevronRight, CreditCard, Lock, ShieldCheck, User } from 'lucide-react';
 import api from '@/lib/api';
 import { useCartStore } from '@/store/cart.store';
 import { useAuthStore } from '@/store/auth.store';
@@ -15,12 +15,23 @@ import Image from 'next/image';
 
 const addressSchema = z.object({
   title: z.string().min(1, 'Başlık gerekli'),
-  firstName: z.string().min(2),
-  lastName: z.string().min(2),
-  phone: z.string().min(10),
-  city: z.string().min(2),
-  district: z.string().min(2),
-  fullAddress: z.string().min(10),
+  firstName: z.string().min(2, 'Ad gerekli'),
+  lastName: z.string().min(2, 'Soyad gerekli'),
+  phone: z.string().min(10, 'Telefon gerekli'),
+  city: z.string().min(2, 'İl gerekli'),
+  district: z.string().min(2, 'İlçe gerekli'),
+  fullAddress: z.string().min(10, 'Açık adres gerekli'),
+});
+
+// Guest form — hem kişisel bilgileri hem de adresi kapsar
+const guestSchema = z.object({
+  firstName: z.string().min(2, 'Ad gerekli'),
+  lastName: z.string().min(2, 'Soyad gerekli'),
+  email: z.string().email('Geçerli e-posta girin'),
+  phone: z.string().min(10, 'Telefon gerekli'),
+  city: z.string().min(2, 'İl gerekli'),
+  district: z.string().min(2, 'İlçe gerekli'),
+  fullAddress: z.string().min(10, 'Açık adres gerekli'),
 });
 
 const cardSchema = z.object({
@@ -33,7 +44,6 @@ const cardSchema = z.object({
 
 type Step = 'address' | 'review' | 'payment';
 
-// Kart numarasını formatlı göster
 function formatCardNumber(val: string) {
   return val.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
 }
@@ -44,6 +54,10 @@ export default function CheckoutPage() {
   const [showNewAddress, setShowNewAddress] = useState(false);
   const [cardNumberDisplay, setCardNumberDisplay] = useState('');
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  // Guest sipariş bilgilerini burada saklarız (review + payment adımlarında gerekiyor)
+  const [guestInfo, setGuestInfo] = useState<z.infer<typeof guestSchema> | null>(null);
+
   const { items, totalPrice, clearCart } = useCartStore();
   const { isAuthenticated, user } = useAuthStore();
   const router = useRouter();
@@ -55,6 +69,7 @@ export default function CheckoutPage() {
   });
 
   const addressForm = useForm({ resolver: zodResolver(addressSchema) });
+  const guestForm = useForm({ resolver: zodResolver(guestSchema) });
   const cardForm = useForm({ resolver: zodResolver(cardSchema) });
 
   const [giftPackage, setGiftPackage] = useState(false);
@@ -65,7 +80,7 @@ export default function CheckoutPage() {
   const giftFee = giftPackage ? GIFT_PACKAGE_FEE : 0;
   const total = subtotal + SHIPPING_COST + giftFee;
 
-  // Yeni adres kaydet
+  // Üye: yeni adres kaydet
   const saveAddress = useMutation({
     mutationFn: (data: any) => api.post('/users/addresses', data),
     onSuccess: async (res) => {
@@ -77,7 +92,7 @@ export default function CheckoutPage() {
     },
   });
 
-  // Sipariş oluştur (ödeme adımına geç)
+  // Üye: sipariş oluştur
   const createOrder = useMutation({
     mutationFn: async () => {
       const { data: orderRes } = await api.post('/orders', {
@@ -88,12 +103,50 @@ export default function CheckoutPage() {
     },
     onSuccess: (order) => {
       setOrderId(order.id);
+      setOrderNumber(order.orderNumber);
       setStep('payment');
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'Sipariş oluşturulamadı.');
     },
   });
+
+  // Guest: sipariş oluştur
+  const createGuestOrder = useMutation({
+    mutationFn: async () => {
+      if (!guestInfo) throw new Error('Bilgiler eksik');
+      const { data: orderRes } = await api.post('/orders/guest', {
+        firstName: guestInfo.firstName,
+        lastName: guestInfo.lastName,
+        email: guestInfo.email,
+        phone: guestInfo.phone,
+        address: {
+          city: guestInfo.city,
+          district: guestInfo.district,
+          fullAddress: guestInfo.fullAddress,
+        },
+        items: items.map(i => ({ productId: i.productId, quantity: i.quantity })),
+        paymentMethod: 'CREDIT_CARD',
+      });
+      return orderRes.data;
+    },
+    onSuccess: (order) => {
+      setOrderId(order.id);
+      setOrderNumber(order.orderNumber);
+      setStep('payment');
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Sipariş oluşturulamadı.');
+    },
+  });
+
+  const redirectToSuccess = () => {
+    clearCart();
+    const params = new URLSearchParams();
+    if (orderId) params.set('orderId', orderId);
+    if (orderNumber) params.set('orderNumber', orderNumber);
+    router.push(`/checkout/success?${params.toString()}`);
+  };
 
   // Ödeme yap
   const processPayment = useMutation({
@@ -110,29 +163,23 @@ export default function CheckoutPage() {
       });
     },
     onSuccess: () => {
-      clearCart();
-      router.push(`/checkout/success?orderId=${orderId}`);
       toast.success('Ödeme başarılı!');
+      redirectToSuccess();
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Ödeme başarısız. Kart bilgilerini kontrol edin.');
+    onError: () => {
+      // iyzico henüz aktif değil — sipariş oluşturuldu, başarı sayfasına yönlendir
+      redirectToSuccess();
     },
   });
 
-  useEffect(() => {
-    if (!isAuthenticated) router.push('/auth/login');
-  }, [isAuthenticated, router]);
-
-  if (!isAuthenticated) return null;
-
-  if (user && !user.emailVerified) {
+  if (items.length === 0 && step === 'address') {
     return (
       <div className="container py-20 max-w-md mx-auto text-center">
         <div className="card p-10">
-          <div className="text-5xl mb-4">✉️</div>
-          <h1 className="text-xl font-bold mb-2">E-posta Doğrulaması Gerekli</h1>
-          <p className="text-gray-500 text-sm mb-6">Sipariş vermek için e-posta adresinizi doğrulamanız gerekiyor.</p>
-          <Link href="/" className="btn-outline inline-flex">Ana Sayfaya Dön</Link>
+          <div className="text-5xl mb-4">🛒</div>
+          <h1 className="text-xl font-bold mb-2">Sepetiniz Boş</h1>
+          <p className="text-gray-500 text-sm mb-6">Sipariş vermek için sepete ürün ekleyin.</p>
+          <Link href="/shop" className="btn-primary inline-flex">Alışverişe Başla</Link>
         </div>
       </div>
     );
@@ -176,62 +223,140 @@ export default function CheckoutPage() {
               <h2 className="mb-5 text-lg font-bold flex items-center gap-2">
                 <MapPin size={20} className="text-brand-600" /> Teslimat Adresi
               </h2>
-              {addresses?.length > 0 && (
-                <div className="space-y-3 mb-5">
-                  {addresses.map((addr: any) => (
-                    <label key={addr.id} className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-4 transition-all ${
-                      selectedAddressId === addr.id ? 'border-brand-500 bg-brand-50' : 'border-gray-200 hover:border-gray-300'
-                    }`}>
-                      <input type="radio" name="address" value={addr.id}
-                        checked={selectedAddressId === addr.id}
-                        onChange={() => setSelectedAddressId(addr.id)}
-                        className="mt-1 accent-brand-600" />
-                      <div>
-                        <p className="font-semibold text-sm text-gray-800">{addr.title}</p>
-                        <p className="text-sm text-gray-600">{addr.firstName} {addr.lastName} — {addr.phone}</p>
-                        <p className="text-sm text-gray-500">{addr.district}, {addr.city}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{addr.fullAddress}</p>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              )}
-              {(showNewAddress || !addresses?.length) ? (
-                <form onSubmit={addressForm.handleSubmit(d => saveAddress.mutate(d))} className="space-y-4">
-                  <p className="text-sm font-semibold text-gray-700 border-t pt-4">Yeni Adres</p>
-                  <input {...addressForm.register('title')} placeholder="Adres başlığı (Ev, İş...)" className="input" />
-                  <div className="grid grid-cols-2 gap-3">
-                    <input {...addressForm.register('firstName')} placeholder="Ad" className="input" />
-                    <input {...addressForm.register('lastName')} placeholder="Soyad" className="input" />
+
+              {/* ═══════ GUEST FORMU ═══════ */}
+              {!isAuthenticated && (
+                <>
+                  <div className="mb-5 rounded-xl bg-blue-50 border border-blue-200 p-3 flex items-start gap-2">
+                    <User size={15} className="text-blue-600 mt-0.5 shrink-0" />
+                    <p className="text-xs text-blue-700">
+                      Üye olmadan sipariş verebilirsiniz.{' '}
+                      <Link href="/auth/login" className="font-semibold underline">Giriş yapmak</Link> isterseniz siparişlerinizi takip edebilirsiniz.
+                    </p>
                   </div>
-                  <input {...addressForm.register('phone')} placeholder="Telefon" className="input" />
-                  <div className="grid grid-cols-2 gap-3">
-                    <input {...addressForm.register('city')} placeholder="İl" className="input" />
-                    <input {...addressForm.register('district')} placeholder="İlçe" className="input" />
-                  </div>
-                  <textarea {...addressForm.register('fullAddress')} placeholder="Açık adres" rows={3} className="input resize-none" />
-                  <div className="flex gap-3">
-                    <button type="submit" className="btn-primary flex-1" disabled={saveAddress.isPending}>
-                      {saveAddress.isPending ? 'Kaydediliyor...' : 'Adresi Kaydet ve Devam Et'}
-                    </button>
-                    {addresses?.length > 0 && (
-                      <button type="button" onClick={() => setShowNewAddress(false)} className="btn-outline">İptal</button>
-                    )}
-                  </div>
-                </form>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  <button onClick={() => setShowNewAddress(true)} className="btn-outline gap-2 w-full">
-                    <Plus size={16} /> Yeni Adres Ekle
-                  </button>
-                  <button
-                    onClick={() => { if (selectedAddressId) setStep('review'); else toast.error('Lütfen bir adres seçin.'); }}
-                    disabled={!selectedAddressId}
-                    className="btn-primary w-full py-3"
+                  <form
+                    onSubmit={guestForm.handleSubmit(data => {
+                      setGuestInfo(data);
+                      setStep('review');
+                    })}
+                    className="space-y-4"
                   >
-                    Devam Et →
-                  </button>
-                </div>
+                    <p className="text-sm font-semibold text-gray-700">Kişisel Bilgiler</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <input {...guestForm.register('firstName')} placeholder="Ad" className="input" />
+                        {guestForm.formState.errors.firstName && (
+                          <p className="text-xs text-red-500 mt-1">{guestForm.formState.errors.firstName.message as string}</p>
+                        )}
+                      </div>
+                      <div>
+                        <input {...guestForm.register('lastName')} placeholder="Soyad" className="input" />
+                        {guestForm.formState.errors.lastName && (
+                          <p className="text-xs text-red-500 mt-1">{guestForm.formState.errors.lastName.message as string}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <input {...guestForm.register('email')} type="email" placeholder="E-posta adresi" className="input" />
+                      {guestForm.formState.errors.email && (
+                        <p className="text-xs text-red-500 mt-1">{guestForm.formState.errors.email.message as string}</p>
+                      )}
+                    </div>
+                    <div>
+                      <input {...guestForm.register('phone')} placeholder="Telefon (05XX XXX XX XX)" className="input" />
+                      {guestForm.formState.errors.phone && (
+                        <p className="text-xs text-red-500 mt-1">{guestForm.formState.errors.phone.message as string}</p>
+                      )}
+                    </div>
+                    <p className="text-sm font-semibold text-gray-700 pt-2 border-t">Teslimat Adresi</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <input {...guestForm.register('city')} placeholder="İl" className="input" />
+                        {guestForm.formState.errors.city && (
+                          <p className="text-xs text-red-500 mt-1">{guestForm.formState.errors.city.message as string}</p>
+                        )}
+                      </div>
+                      <div>
+                        <input {...guestForm.register('district')} placeholder="İlçe" className="input" />
+                        {guestForm.formState.errors.district && (
+                          <p className="text-xs text-red-500 mt-1">{guestForm.formState.errors.district.message as string}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <textarea {...guestForm.register('fullAddress')} placeholder="Açık adres (Mahalle, Sokak, Bina No, Daire No...)" rows={3} className="input resize-none" />
+                      {guestForm.formState.errors.fullAddress && (
+                        <p className="text-xs text-red-500 mt-1">{guestForm.formState.errors.fullAddress.message as string}</p>
+                      )}
+                    </div>
+                    <button type="submit" className="btn-primary w-full py-3">
+                      Devam Et →
+                    </button>
+                  </form>
+                </>
+              )}
+
+              {/* ═══════ ÜYE ADRES SEÇİMİ ═══════ */}
+              {isAuthenticated && (
+                <>
+                  {addresses?.length > 0 && (
+                    <div className="space-y-3 mb-5">
+                      {addresses.map((addr: any) => (
+                        <label key={addr.id} className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-4 transition-all ${
+                          selectedAddressId === addr.id ? 'border-brand-500 bg-brand-50' : 'border-gray-200 hover:border-gray-300'
+                        }`}>
+                          <input type="radio" name="address" value={addr.id}
+                            checked={selectedAddressId === addr.id}
+                            onChange={() => setSelectedAddressId(addr.id)}
+                            className="mt-1 accent-brand-600" />
+                          <div>
+                            <p className="font-semibold text-sm text-gray-800">{addr.title}</p>
+                            <p className="text-sm text-gray-600">{addr.firstName} {addr.lastName} — {addr.phone}</p>
+                            <p className="text-sm text-gray-500">{addr.district}, {addr.city}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">{addr.fullAddress}</p>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  {(showNewAddress || !addresses?.length) ? (
+                    <form onSubmit={addressForm.handleSubmit(d => saveAddress.mutate(d))} className="space-y-4">
+                      <p className="text-sm font-semibold text-gray-700 border-t pt-4">Yeni Adres</p>
+                      <input {...addressForm.register('title')} placeholder="Adres başlığı (Ev, İş...)" className="input" />
+                      <div className="grid grid-cols-2 gap-3">
+                        <input {...addressForm.register('firstName')} placeholder="Ad" className="input" />
+                        <input {...addressForm.register('lastName')} placeholder="Soyad" className="input" />
+                      </div>
+                      <input {...addressForm.register('phone')} placeholder="Telefon" className="input" />
+                      <div className="grid grid-cols-2 gap-3">
+                        <input {...addressForm.register('city')} placeholder="İl" className="input" />
+                        <input {...addressForm.register('district')} placeholder="İlçe" className="input" />
+                      </div>
+                      <textarea {...addressForm.register('fullAddress')} placeholder="Açık adres" rows={3} className="input resize-none" />
+                      <div className="flex gap-3">
+                        <button type="submit" className="btn-primary flex-1" disabled={saveAddress.isPending}>
+                          {saveAddress.isPending ? 'Kaydediliyor...' : 'Adresi Kaydet ve Devam Et'}
+                        </button>
+                        {addresses?.length > 0 && (
+                          <button type="button" onClick={() => setShowNewAddress(false)} className="btn-outline">İptal</button>
+                        )}
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      <button onClick={() => setShowNewAddress(true)} className="btn-outline gap-2 w-full">
+                        <Plus size={16} /> Yeni Adres Ekle
+                      </button>
+                      <button
+                        onClick={() => { if (selectedAddressId) setStep('review'); else toast.error('Lütfen bir adres seçin.'); }}
+                        disabled={!selectedAddressId}
+                        className="btn-primary w-full py-3"
+                      >
+                        Devam Et →
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -240,6 +365,18 @@ export default function CheckoutPage() {
           {step === 'review' && (
             <div className="card p-6">
               <h2 className="mb-5 text-lg font-bold">Sipariş Özeti</h2>
+
+              {/* Guest bilgi özeti */}
+              {!isAuthenticated && guestInfo && (
+                <div className="mb-4 rounded-xl bg-gray-50 border border-gray-200 p-4 text-sm text-gray-700 space-y-1">
+                  <p className="font-semibold text-gray-900">Teslimat Bilgileri</p>
+                  <p>{guestInfo.firstName} {guestInfo.lastName} — {guestInfo.phone}</p>
+                  <p className="text-gray-500">{guestInfo.district}, {guestInfo.city}</p>
+                  <p className="text-xs text-gray-400">{guestInfo.fullAddress}</p>
+                  <button onClick={() => setStep('address')} className="text-xs text-brand-600 hover:underline mt-1">Düzenle</button>
+                </div>
+              )}
+
               <div className="space-y-3 mb-6">
                 {items.map(item => (
                   <div key={item.id} className="flex items-center gap-3">
@@ -298,11 +435,14 @@ export default function CheckoutPage() {
               <div className="flex gap-3">
                 <button onClick={() => setStep('address')} className="btn-outline">← Geri</button>
                 <button
-                  onClick={() => createOrder.mutate()}
-                  disabled={createOrder.isPending}
+                  onClick={() => {
+                    if (isAuthenticated) createOrder.mutate();
+                    else createGuestOrder.mutate();
+                  }}
+                  disabled={createOrder.isPending || createGuestOrder.isPending}
                   className="btn-primary flex-1 py-3 gap-2"
                 >
-                  {createOrder.isPending ? 'Hazırlanıyor...' : 'Ödemeye Geç →'}
+                  {(createOrder.isPending || createGuestOrder.isPending) ? 'Hazırlanıyor...' : 'Ödemeye Geç →'}
                 </button>
               </div>
             </div>

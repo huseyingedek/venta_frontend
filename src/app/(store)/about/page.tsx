@@ -59,7 +59,7 @@ export default function AboutPage() {
           {
             icon: <HeadphonesIcon size={24} className="text-brand-600" />,
             title: 'Müşteri Desteği',
-            desc: 'Sorularınız ve talepleriniz için WhatsApp veya e-posta üzerinden 7/24 destek ekibimize ulaşabilirsiniz.',
+            desc: 'Sorularınız için 0535 467 68 01 numaralı WhatsApp hattımızdan veya destek@ventapremium.com.tr adresimizden bize ulaşabilirsiniz.',
           },
           {
             icon: <Star size={24} className="text-brand-600" />,
@@ -83,8 +83,10 @@ export default function AboutPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-700">
           {[
             ['Marka', 'Venta Premium'],
+            ['Telefon / WhatsApp', '0535 467 68 01'],
             ['E-posta', 'destek@ventapremium.com.tr'],
             ['Web Sitesi', 'www.ventapremium.com.tr'],
+            ['Instagram', '@ventapremiumcomtr'],
           ].map(([label, value]) => (
             <div key={label} className="flex gap-2">
               <span className="font-semibold text-gray-500 shrink-0">{label}:</span>

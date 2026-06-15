@@ -4,9 +4,7 @@ import Image from 'next/image';
 import { ShoppingCart, Heart, Star } from 'lucide-react';
 import { useState } from 'react';
 import { useCartStore } from '@/store/cart.store';
-import { useAuthStore } from '@/store/auth.store';
-import api from '@/lib/api';
-import toast from 'react-hot-toast';
+import { useWishlistStore } from '@/store/wishlist.store';
 
 interface Product {
   id: string;
@@ -25,9 +23,8 @@ interface Product {
 
 export default function ProductCard({ product }: { product: Product }) {
   const { addItem, isLoading } = useCartStore();
-  const { isAuthenticated } = useAuthStore();
-  const [inWishlist, setInWishlist] = useState(false);
-  const [wishlistLoading, setWishlistLoading] = useState(false);
+  const { toggle: toggleWishlist, has } = useWishlistStore();
+  const inWishlist = has(product.id);
 
   const [hovered, setHovered] = useState(false);
   const imageUrl = product.thumbnail || product.images?.[0]?.url;
@@ -39,28 +36,23 @@ export default function ProductCard({ product }: { product: Product }) {
   const getImgSrc = (url: string) =>
     url?.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '')}${url}`;
 
-  const handleWishlist = async (e: React.MouseEvent) => {
+  const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isAuthenticated) { toast.error('Favorilere eklemek için giriş yapın.'); return; }
-    setWishlistLoading(true);
-    try {
-      const res = await api.post('/users/wishlist', { productId: product.id });
-      const added = res.data.action === 'added';
-      setInWishlist(added);
-      toast.success(added ? '❤️ Favorilere eklendi!' : 'Favorilerden çıkarıldı.');
-    } catch {
-      toast.error('Bir hata oluştu.');
-    } finally {
-      setWishlistLoading(false);
-    }
+    toggleWishlist(product.id);
   };
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    await addItem(product.id);
-    toast.success('Sepete eklendi!');
+    addItem(product.id, 1, undefined, {
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      price: Number(product.price),
+      thumbnail: product.thumbnail ?? null,
+      stock: product.stock,
+    });
   };
 
   return (
@@ -75,7 +67,6 @@ export default function ProductCard({ product }: { product: Product }) {
       {/* Favori butonu */}
       <button
         onClick={handleWishlist}
-        disabled={wishlistLoading}
         className={`absolute right-3 top-3 z-10 rounded-full p-1.5 shadow-sm transition-all ${
           inWishlist
             ? 'bg-red-50 text-red-500 opacity-100'

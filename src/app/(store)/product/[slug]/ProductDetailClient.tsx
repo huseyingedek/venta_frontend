@@ -8,6 +8,7 @@ import { ShoppingCart, Heart, Star, Shield, Truck, RefreshCw, ChevronRight, Chev
 import api from '@/lib/api';
 import { useCartStore } from '@/store/cart.store';
 import { useAuthStore } from '@/store/auth.store';
+import { useWishlistStore } from '@/store/wishlist.store';
 import toast from 'react-hot-toast';
 import { useForm } from 'react-hook-form';
 import ProductCard from '@/components/product/ProductCard';
@@ -17,21 +18,12 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
-  const [inWishlist, setInWishlist] = useState(false);
   const router = useRouter();
   const { addItem, isLoading } = useCartStore();
   const { isAuthenticated } = useAuthStore();
+  const { toggle: toggleWishlist, has } = useWishlistStore();
   const qc = useQueryClient();
   const reviewForm = useForm({ defaultValues: { rating: 5, title: '', comment: '' } });
-
-  const toggleWishlist = useMutation({
-    mutationFn: (productId: string) => api.post('/users/wishlist', { productId }),
-    onSuccess: (res) => {
-      setInWishlist(res.data.action === 'added');
-      toast.success(res.data.action === 'added' ? '❤️ Favorilere eklendi!' : 'Favorilerden çıkarıldı.');
-    },
-    onError: () => toast.error('Giriş yapmanız gerekiyor.'),
-  });
 
   const submitReview = useMutation({
     mutationFn: (data: any) => api.post('/users/reviews', { productId: product.id, ...data }),
@@ -57,13 +49,13 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
   const product = data;
 
   const handleAddToCart = async () => {
-    await addItem(product.id, quantity, selectedVariant || undefined);
+    await addItem(product.id, quantity, selectedVariant || undefined, productData);
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
   };
 
   const handleBuyNow = async () => {
-    await addItem(product.id, quantity, selectedVariant || undefined);
+    await addItem(product.id, quantity, selectedVariant || undefined, productData);
     router.push('/checkout');
   };
 
@@ -120,6 +112,16 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
   }
 
   if (!product) return <div className="container py-20 text-center text-gray-500">Ürün bulunamadı.</div>;
+
+  const productData = {
+    id: product.id,
+    slug: product.slug,
+    name: product.name,
+    price: Number(product.price),
+    thumbnail: product.thumbnail ?? null,
+    stock: product.stock,
+    sku: product.sku,
+  };
 
   const allImages = [
     ...(product.thumbnail ? [product.thumbnail] : []),
@@ -237,28 +239,39 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
           <p className="text-xs text-gray-400">KDV Dahildir</p>
 
           {/* Varyantlar */}
-          {product.variants?.length > 0 && (
-            <div>
-              <p className="mb-2 text-sm font-semibold text-gray-700">Seçenek:</p>
-              <div className="flex flex-wrap gap-2">
-                {product.variants.map((v: any) => (
-                  <button
-                    key={v.id}
-                    onClick={() => setSelectedVariant(v.id)}
-                    disabled={v.stock === 0}
-                    className={`rounded-lg border px-4 py-2 text-sm font-medium transition-all ${
-                      selectedVariant === v.id
-                        ? 'border-brand-500 bg-brand-50 text-brand-700'
-                        : 'border-gray-200 hover:border-brand-300 disabled:opacity-40 disabled:cursor-not-allowed'
-                    }`}
-                  >
-                    {v.name}
-                    {v.stock === 0 && ' (Tükendi)'}
-                  </button>
-                ))}
+          {product.variants?.length > 0 && (() => {
+            // "Beden: S" → { label: "Beden", value: "S" } gruplarına ayır
+            const groups: Record<string, { id: string; value: string; stock: number }[]> = {};
+            for (const v of product.variants) {
+              const colonIdx = v.name?.indexOf(':');
+              const label = colonIdx > 0 ? v.name.slice(0, colonIdx).trim() : 'Seçenek';
+              const value = colonIdx > 0 ? v.name.slice(colonIdx + 1).trim() : v.name;
+              if (!groups[label]) groups[label] = [];
+              groups[label].push({ id: v.id, value, stock: v.stock });
+            }
+            return Object.entries(groups).map(([label, opts]) => (
+              <div key={label}>
+                <p className="mb-2 text-sm font-semibold text-gray-700">{label}:</p>
+                <div className="flex flex-wrap gap-2">
+                  {opts.map(opt => (
+                    <button
+                      key={opt.id}
+                      onClick={() => setSelectedVariant(opt.id)}
+                      disabled={opt.stock === 0}
+                      className={`rounded-lg border px-4 py-2 text-sm font-medium transition-all ${
+                        selectedVariant === opt.id
+                          ? 'border-brand-500 bg-brand-50 text-brand-700'
+                          : 'border-gray-200 hover:border-brand-300 disabled:opacity-40 disabled:cursor-not-allowed'
+                      }`}
+                    >
+                      {opt.value}
+                      {opt.stock === 0 && ' (Tükendi)'}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            ));
+          })()}
 
           {/* Stok durumu */}
           <div className="flex items-center gap-2">
@@ -307,12 +320,12 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
               </button>
 
               <button
-                onClick={() => isAuthenticated ? toggleWishlist.mutate(product.id) : toast.error('Önce giriş yapın.')}
+                onClick={() => toggleWishlist(product.id)}
                 className={`rounded-xl border p-3 transition-colors ${
-                  inWishlist ? 'border-red-300 bg-red-50 text-red-500' : 'border-gray-200 hover:border-red-300 hover:text-red-500'
+                  has(product.id) ? 'border-red-300 bg-red-50 text-red-500' : 'border-gray-200 hover:border-red-300 hover:text-red-500'
                 }`}
               >
-                <Heart size={20} className={inWishlist ? 'fill-red-500' : ''} />
+                <Heart size={20} className={has(product.id) ? 'fill-red-500' : ''} />
               </button>
             </div>
 

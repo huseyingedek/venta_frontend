@@ -1,8 +1,8 @@
 {
   "/not-found": "app/not-found.js",
+  "/(store)/product/[slug]/page": "app/(store)/product/[slug]/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/admin/suppliers/page": "app/admin/suppliers/page.js",
   "/(store)/page": "app/(store)/page.js",
-  "/(store)/checkout/page": "app/(store)/checkout/page.js",
-  "/(store)/account/orders/page": "app/(store)/account/orders/page.js",
-  "/(store)/checkout/success/page": "app/(store)/checkout/success/page.js",
-  "/(store)/product/[slug]/page": "app/(store)/product/[slug]/page.js"
+  "/(store)/shop/page": "app/(store)/shop/page.js"
 }

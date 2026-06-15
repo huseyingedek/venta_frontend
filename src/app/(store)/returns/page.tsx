@@ -107,12 +107,12 @@ export default function ReturnsPage() {
           </p>
           <div className="flex flex-wrap gap-3">
             <a
-              href={`https://wa.me/${process.env.NEXT_PUBLIC_ADMIN_WHATSAPP || ''}`}
+              href="https://wa.me/905354676801?text=Merhaba%2C%20iade%20talebi%20olu%C5%9Fturmak%20istiyorum."
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 rounded-xl bg-white/20 px-4 py-2.5 text-sm font-semibold hover:bg-white/30 transition-colors"
             >
-              <MessageCircle size={15} /> WhatsApp
+              <MessageCircle size={15} /> WhatsApp — 0535 467 68 01
             </a>
             <a
               href="mailto:destek@ventapremium.com.tr"
