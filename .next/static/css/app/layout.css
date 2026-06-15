@@ -2276,6 +2276,9 @@ video {
 .pt-4 {
   padding-top: 1rem;
 }
+.pr-12 {
+  padding-right: 3rem;
+}
 .text-left {
   text-align: left;
 }
@@ -2638,6 +2641,10 @@ video {
 .text-yellow-700 {
   --tw-text-opacity: 1;
   color: rgb(161 98 7 / var(--tw-text-opacity, 1));
+}
+.text-brand-800 {
+  --tw-text-opacity: 1;
+  color: rgb(148 54 19 / var(--tw-text-opacity, 1));
 }
 .underline {
   text-decoration-line: underline;

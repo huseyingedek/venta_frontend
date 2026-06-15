@@ -6,7 +6,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, MapPin, ChevronRight, MessageCircle } from 'lucide-react';
+import { Plus, MapPin, ChevronRight, CreditCard, Lock, ShieldCheck } from 'lucide-react';
 import api from '@/lib/api';
 import { useCartStore } from '@/store/cart.store';
 import { useAuthStore } from '@/store/auth.store';
@@ -23,12 +23,27 @@ const addressSchema = z.object({
   fullAddress: z.string().min(10),
 });
 
-type Step = 'address' | 'review';
+const cardSchema = z.object({
+  cardHolderName: z.string().min(3, 'Kart sahibi adı gerekli'),
+  cardNumber: z.string().min(16, 'Geçerli kart numarası girin').max(19),
+  expireMonth: z.string().min(1, 'Ay gerekli'),
+  expireYear: z.string().min(2, 'Yıl gerekli'),
+  cvc: z.string().min(3, 'CVC gerekli').max(4),
+});
+
+type Step = 'address' | 'review' | 'payment';
+
+// Kart numarasını formatlı göster
+function formatCardNumber(val: string) {
+  return val.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
+}
 
 export default function CheckoutPage() {
   const [step, setStep] = useState<Step>('address');
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showNewAddress, setShowNewAddress] = useState(false);
+  const [cardNumberDisplay, setCardNumberDisplay] = useState('');
+  const [orderId, setOrderId] = useState<string | null>(null);
   const { items, totalPrice, clearCart } = useCartStore();
   const { isAuthenticated, user } = useAuthStore();
   const router = useRouter();
@@ -40,6 +55,7 @@ export default function CheckoutPage() {
   });
 
   const addressForm = useForm({ resolver: zodResolver(addressSchema) });
+  const cardForm = useForm({ resolver: zodResolver(cardSchema) });
 
   const [giftPackage, setGiftPackage] = useState(false);
 
@@ -61,29 +77,50 @@ export default function CheckoutPage() {
     },
   });
 
-  // Sipariş oluştur
-  const placeOrder = useMutation({
+  // Sipariş oluştur (ödeme adımına geç)
+  const createOrder = useMutation({
     mutationFn: async () => {
       const { data: orderRes } = await api.post('/orders', {
         addressId: selectedAddressId,
-        paymentMethod: 'BANK_TRANSFER',
+        paymentMethod: 'CREDIT_CARD',
       });
       return orderRes.data;
     },
     onSuccess: (order) => {
-      clearCart();
-      router.push(`/checkout/success?orderId=${order.id}`);
-      toast.success('Siparişiniz alındı!');
+      setOrderId(order.id);
+      setStep('payment');
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'Sipariş oluşturulamadı.');
     },
   });
 
+  // Ödeme yap
+  const processPayment = useMutation({
+    mutationFn: async (cardData: any) => {
+      const raw = cardData.cardNumber.replace(/\s/g, '');
+      await api.post('/payment/initiate', {
+        orderId,
+        cardHolderName: cardData.cardHolderName,
+        cardNumber: raw,
+        expireMonth: cardData.expireMonth,
+        expireYear: cardData.expireYear,
+        cvc: cardData.cvc,
+        installment: 1,
+      });
+    },
+    onSuccess: () => {
+      clearCart();
+      router.push(`/checkout/success?orderId=${orderId}`);
+      toast.success('Ödeme başarılı!');
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Ödeme başarısız. Kart bilgilerini kontrol edin.');
+    },
+  });
+
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/auth/login');
-    }
+    if (!isAuthenticated) router.push('/auth/login');
   }, [isAuthenticated, router]);
 
   if (!isAuthenticated) return null;
@@ -94,10 +131,7 @@ export default function CheckoutPage() {
         <div className="card p-10">
           <div className="text-5xl mb-4">✉️</div>
           <h1 className="text-xl font-bold mb-2">E-posta Doğrulaması Gerekli</h1>
-          <p className="text-gray-500 text-sm mb-6">
-            Sipariş vermek için e-posta adresinizi doğrulamanız gerekiyor.
-            Gelen kutunuzu kontrol edin.
-          </p>
+          <p className="text-gray-500 text-sm mb-6">Sipariş vermek için e-posta adresinizi doğrulamanız gerekiyor.</p>
           <Link href="/" className="btn-outline inline-flex">Ana Sayfaya Dön</Link>
         </div>
       </div>
@@ -106,7 +140,8 @@ export default function CheckoutPage() {
 
   const steps = [
     { key: 'address', label: 'Teslimat Adresi', num: 1 },
-    { key: 'review', label: 'Sipariş Özeti', num: 2 },
+    { key: 'review',  label: 'Sipariş Özeti',   num: 2 },
+    { key: 'payment', label: 'Ödeme',            num: 3 },
   ];
 
   return (
@@ -133,7 +168,6 @@ export default function CheckoutPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {/* Sol — Ana içerik */}
         <div className="lg:col-span-2">
 
           {/* ADIM 1 — Adres */}
@@ -142,22 +176,16 @@ export default function CheckoutPage() {
               <h2 className="mb-5 text-lg font-bold flex items-center gap-2">
                 <MapPin size={20} className="text-brand-600" /> Teslimat Adresi
               </h2>
-
-              {/* Kayıtlı adresler */}
               {addresses?.length > 0 && (
                 <div className="space-y-3 mb-5">
                   {addresses.map((addr: any) => (
                     <label key={addr.id} className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-4 transition-all ${
                       selectedAddressId === addr.id ? 'border-brand-500 bg-brand-50' : 'border-gray-200 hover:border-gray-300'
                     }`}>
-                      <input
-                        type="radio"
-                        name="address"
-                        value={addr.id}
+                      <input type="radio" name="address" value={addr.id}
                         checked={selectedAddressId === addr.id}
                         onChange={() => setSelectedAddressId(addr.id)}
-                        className="mt-1 accent-brand-600"
-                      />
+                        className="mt-1 accent-brand-600" />
                       <div>
                         <p className="font-semibold text-sm text-gray-800">{addr.title}</p>
                         <p className="text-sm text-gray-600">{addr.firstName} {addr.lastName} — {addr.phone}</p>
@@ -168,8 +196,6 @@ export default function CheckoutPage() {
                   ))}
                 </div>
               )}
-
-              {/* Yeni adres formu */}
               {(showNewAddress || !addresses?.length) ? (
                 <form onSubmit={addressForm.handleSubmit(d => saveAddress.mutate(d))} className="space-y-4">
                   <p className="text-sm font-semibold text-gray-700 border-t pt-4">Yeni Adres</p>
@@ -195,10 +221,7 @@ export default function CheckoutPage() {
                 </form>
               ) : (
                 <div className="flex flex-col gap-3">
-                  <button
-                    onClick={() => setShowNewAddress(true)}
-                    className="btn-outline gap-2 w-full"
-                  >
+                  <button onClick={() => setShowNewAddress(true)} className="btn-outline gap-2 w-full">
                     <Plus size={16} /> Yeni Adres Ekle
                   </button>
                   <button
@@ -213,11 +236,10 @@ export default function CheckoutPage() {
             </div>
           )}
 
-          {/* ADIM 2 — Özet ve Sipariş Ver */}
+          {/* ADIM 2 — Sipariş Özeti */}
           {step === 'review' && (
             <div className="card p-6">
               <h2 className="mb-5 text-lg font-bold">Sipariş Özeti</h2>
-
               <div className="space-y-3 mb-6">
                 {items.map(item => (
                   <div key={item.id} className="flex items-center gap-3">
@@ -225,8 +247,7 @@ export default function CheckoutPage() {
                       {item.product.thumbnail && (
                         <Image
                           src={item.product.thumbnail.startsWith('http') ? item.product.thumbnail : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '')}${item.product.thumbnail}`}
-                          alt={item.product.name}
-                          width={48} height={48}
+                          alt={item.product.name} width={48} height={48}
                           className="h-full w-full object-cover"
                         />
                       )}
@@ -274,25 +295,127 @@ export default function CheckoutPage() {
                 <p className="text-xs text-gray-400 text-center">KDV Dahildir</p>
               </div>
 
-              {/* Ödeme bilgisi */}
-              <div className="rounded-xl bg-green-50 border border-green-200 p-4 mb-5 flex items-start gap-3">
-                <MessageCircle size={20} className="text-green-600 shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-semibold text-green-800 mb-1">WhatsApp ile Ödeme</p>
-                  <p className="text-green-700">Siparişiniz oluşturulunca sizinle WhatsApp üzerinden iletişime geçeceğiz ve IBAN bilgilerimizi ileteceğiz.</p>
-                </div>
-              </div>
-
               <div className="flex gap-3">
                 <button onClick={() => setStep('address')} className="btn-outline">← Geri</button>
                 <button
-                  onClick={() => placeOrder.mutate()}
-                  disabled={placeOrder.isPending}
+                  onClick={() => createOrder.mutate()}
+                  disabled={createOrder.isPending}
                   className="btn-primary flex-1 py-3 gap-2"
                 >
-                  {placeOrder.isPending ? 'Sipariş oluşturuluyor...' : '✓ Siparişi Tamamla'}
+                  {createOrder.isPending ? 'Hazırlanıyor...' : 'Ödemeye Geç →'}
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* ADIM 3 — Ödeme */}
+          {step === 'payment' && (
+            <div className="card p-6">
+              <h2 className="mb-2 text-lg font-bold flex items-center gap-2">
+                <CreditCard size={20} className="text-brand-600" /> Kart Bilgileri
+              </h2>
+              <div className="flex items-center gap-2 mb-6">
+                <Lock size={13} className="text-green-600" />
+                <span className="text-xs text-green-700 font-medium">256-bit SSL ile güvenli şifreleme</span>
+                <span className="text-xs text-gray-400">· iyzico güvencesiyle</span>
+              </div>
+
+              <form onSubmit={cardForm.handleSubmit(d => processPayment.mutate(d))} className="space-y-4">
+                {/* Kart Sahibi */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Kart Üzerindeki İsim</label>
+                  <input
+                    {...cardForm.register('cardHolderName')}
+                    placeholder="AD SOYAD"
+                    className="input uppercase"
+                    style={{ textTransform: 'uppercase' }}
+                  />
+                  {cardForm.formState.errors.cardHolderName && (
+                    <p className="text-xs text-red-500 mt-1">{cardForm.formState.errors.cardHolderName.message as string}</p>
+                  )}
+                </div>
+
+                {/* Kart Numarası */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Kart Numarası</label>
+                  <div className="relative">
+                    <input
+                      {...cardForm.register('cardNumber')}
+                      value={cardNumberDisplay}
+                      onChange={e => {
+                        const formatted = formatCardNumber(e.target.value);
+                        setCardNumberDisplay(formatted);
+                        cardForm.setValue('cardNumber', formatted);
+                      }}
+                      placeholder="0000 0000 0000 0000"
+                      className="input font-mono pr-12"
+                      maxLength={19}
+                    />
+                    <CreditCard size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300" />
+                  </div>
+                  {cardForm.formState.errors.cardNumber && (
+                    <p className="text-xs text-red-500 mt-1">{cardForm.formState.errors.cardNumber.message as string}</p>
+                  )}
+                </div>
+
+                {/* Son Kullanma + CVC */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5">Ay</label>
+                    <select {...cardForm.register('expireMonth')} className="input">
+                      <option value="">Ay</option>
+                      {Array.from({ length: 12 }, (_, i) => {
+                        const m = String(i + 1).padStart(2, '0');
+                        return <option key={m} value={m}>{m}</option>;
+                      })}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5">Yıl</label>
+                    <select {...cardForm.register('expireYear')} className="input">
+                      <option value="">Yıl</option>
+                      {Array.from({ length: 10 }, (_, i) => {
+                        const y = String(new Date().getFullYear() + i).slice(-2);
+                        return <option key={y} value={y}>{new Date().getFullYear() + i}</option>;
+                      })}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5">CVC</label>
+                    <input
+                      {...cardForm.register('cvc')}
+                      placeholder="•••"
+                      maxLength={4}
+                      className="input font-mono text-center"
+                      type="password"
+                    />
+                  </div>
+                </div>
+                {(cardForm.formState.errors.expireMonth || cardForm.formState.errors.expireYear || cardForm.formState.errors.cvc) && (
+                  <p className="text-xs text-red-500">Son kullanma tarihi ve CVC gerekli.</p>
+                )}
+
+                {/* Güvenlik badge */}
+                <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 flex items-center gap-3">
+                  <ShieldCheck size={18} className="text-green-600 shrink-0" />
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    Kart bilgileriniz iyzico güvencesiyle şifrelenerek işlenir. Venta Premium kart bilgilerinizi saklamamaktadır.
+                  </p>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={() => setStep('review')} className="btn-outline">← Geri</button>
+                  <button
+                    type="submit"
+                    disabled={processPayment.isPending}
+                    className="btn-primary flex-1 py-3 gap-2"
+                  >
+                    {processPayment.isPending
+                      ? 'Ödeme işleniyor...'
+                      : `Ödemeyi Tamamla — ${total.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}`}
+                  </button>
+                </div>
+              </form>
             </div>
           )}
         </div>
@@ -332,6 +455,10 @@ export default function CheckoutPage() {
             <span>{total.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</span>
           </div>
           <p className="text-xs text-gray-400 mt-1">KDV Dahildir</p>
+          <div className="mt-4 flex items-center justify-center gap-1.5">
+            <Lock size={11} className="text-gray-400" />
+            <span className="text-xs text-gray-400">SSL güvenli ödeme</span>
+          </div>
         </div>
       </div>
     </div>
