@@ -69,7 +69,7 @@ export default function CheckoutPage() {
   });
 
   const addressForm = useForm({ resolver: zodResolver(addressSchema) });
-  const guestForm = useForm({ resolver: zodResolver(guestSchema) });
+  const guestForm = useForm<z.infer<typeof guestSchema>>({ resolver: zodResolver(guestSchema) });
   const cardForm = useForm({ resolver: zodResolver(cardSchema) });
 
   const [giftPackage, setGiftPackage] = useState(false);
