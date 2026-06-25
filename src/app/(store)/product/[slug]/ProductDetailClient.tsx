@@ -147,7 +147,7 @@ export default function ProductDetailClient({ slug }: { slug: string }) {
         {product.category && (
           <>
             <ChevronRight size={14} />
-            <Link href={`/shop?category=${product.category.slug}`} className="hover:text-brand-600">
+            <Link href={`/kategori/${product.category.slug}`} className="hover:text-brand-600">
               {product.category.name}
             </Link>
           </>

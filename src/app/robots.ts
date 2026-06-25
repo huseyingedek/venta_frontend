@@ -7,8 +7,17 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: '/',
-        disallow: ['/admin', '/account', '/checkout', '/cart', '/api/'],
+        allow: ['/', '/shop', '/product/', '/about', '/shipping', '/returns', '/privacy'],
+        disallow: [
+          '/admin/',
+          '/account/',
+          '/checkout/',
+          '/cart',
+          '/wishlist',
+          '/auth/',
+          '/mesafeli-satis',
+          '/api/',
+        ],
       },
     ],
     sitemap: `${BASE_URL}/sitemap.xml`,

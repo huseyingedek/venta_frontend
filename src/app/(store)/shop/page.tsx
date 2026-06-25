@@ -80,7 +80,6 @@ export default function ShopPage() {
                 >
                   {cat.name}
                 </Link>
-                {/* Sadece aktif kategorinin alt kategorilerini göster */}
                 {(activeCategory === cat.slug || cat.children?.some((c: any) => c.slug === activeCategory)) &&
                   cat.children?.map((child: any) => (
                     <Link

@@ -12,21 +12,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/auth/register`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
   ];
 
-  // Dinamik: ürünler
+  // Dinamik: ürünler (tüm sayfaları çek)
   let productPages: MetadataRoute.Sitemap = [];
   try {
-    const res = await fetch(`${API_URL}/products?limit=1000&sort=createdAt&order=desc`, {
-      next: { revalidate: 3600 },
-    });
-    if (res.ok) {
+    const PAGE_SIZE = 500;
+    let page = 1;
+    let hasMore = true;
+    while (hasMore) {
+      const res = await fetch(
+        `${API_URL}/products?limit=${PAGE_SIZE}&page=${page}&sort=createdAt&order=desc`,
+        { next: { revalidate: 3600 } }
+      );
+      if (!res.ok) break;
       const json = await res.json();
-      const products = json.data || [];
-      productPages = products.map((p: any) => ({
-        url: `${BASE_URL}/product/${p.slug}`,
-        lastModified: new Date(p.updatedAt || p.createdAt),
-        changeFrequency: 'weekly' as const,
-        priority: 0.8,
-      }));
+      const products: any[] = json.data || [];
+      productPages.push(
+        ...products.map((p: any) => ({
+          url: `${BASE_URL}/product/${p.slug}`,
+          lastModified: new Date(p.updatedAt || p.createdAt),
+          changeFrequency: 'weekly' as const,
+          priority: 0.8,
+        }))
+      );
+      hasMore = products.length === PAGE_SIZE;
+      page++;
+      if (page > 100) break; // max 50.000 ürün güvenlik limiti
     }
   } catch { /* sitemap oluşturmaya devam et */ }
 

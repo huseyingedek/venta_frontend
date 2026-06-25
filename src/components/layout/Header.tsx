@@ -26,7 +26,7 @@ function CatItem({ cat }: { cat: any }) {
 
   if (!cat.children?.length) {
     return (
-      <Link href={`/shop?category=${cat.slug}`} className="flex items-center px-3.5 py-3 text-[13px] font-semibold text-gray-700 whitespace-nowrap hover:text-brand-600 transition-colors border-b-2 border-transparent hover:border-brand-600 h-full">
+      <Link href={`/kategori/${cat.slug}`} className="flex items-center px-3.5 py-3 text-[13px] font-semibold text-gray-700 whitespace-nowrap hover:text-brand-600 transition-colors border-b-2 border-transparent hover:border-brand-600 h-full">
         {cat.name}
       </Link>
     );
@@ -34,7 +34,7 @@ function CatItem({ cat }: { cat: any }) {
 
   return (
     <div onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
-      <Link href={`/shop?category=${cat.slug}`} className={`flex items-center gap-1 px-3.5 py-3 text-[13px] font-semibold whitespace-nowrap transition-colors border-b-2 h-full ${open ? 'text-brand-600 border-brand-600' : 'text-gray-700 border-transparent hover:text-brand-600 hover:border-brand-600'}`}>
+      <Link href={`/kategori/${cat.slug}`} className={`flex items-center gap-1 px-3.5 py-3 text-[13px] font-semibold whitespace-nowrap transition-colors border-b-2 h-full ${open ? 'text-brand-600 border-brand-600' : 'text-gray-700 border-transparent hover:text-brand-600 hover:border-brand-600'}`}>
         {cat.name}
         <ChevronDown size={11} className={`transition-transform duration-200 opacity-50 ${open ? 'rotate-180 opacity-100' : ''}`} />
       </Link>
@@ -46,12 +46,12 @@ function CatItem({ cat }: { cat: any }) {
               <div className="grid gap-x-8 gap-y-5" style={{ gridTemplateColumns: `repeat(${Math.min(Math.ceil(cat.children.length / 3), 4)}, 1fr)` }}>
                 {cat.children.map((sub: any) => (
                   <div key={sub.id}>
-                    <Link href={`/shop?category=${sub.slug}`} onClick={() => setOpen(false)} className="block text-sm font-bold text-brand-600 hover:text-brand-700 mb-1.5 leading-tight">{sub.name}</Link>
+                    <Link href={`/kategori/${sub.slug}`} onClick={() => setOpen(false)} className="block text-sm font-bold text-brand-600 hover:text-brand-700 mb-1.5 leading-tight">{sub.name}</Link>
                     {sub.children?.length > 0 && (
                       <p className="text-xs text-gray-500 leading-relaxed">
                         {sub.children.map((child: any, i: number) => (
                           <span key={child.id}>
-                            <Link href={`/shop?category=${child.slug}`} onClick={() => setOpen(false)} className="hover:text-brand-600 hover:underline transition-colors">{child.name}</Link>
+                            <Link href={`/kategori/${child.slug}`} onClick={() => setOpen(false)} className="hover:text-brand-600 hover:underline transition-colors">{child.name}</Link>
                             {i < sub.children.length - 1 && <span className="text-gray-300"> , </span>}
                           </span>
                         ))}
@@ -348,7 +348,7 @@ export default function Header() {
                 </button>
                 <div className="absolute top-full left-0 z-50 hidden group-hover:block bg-white border border-gray-200 shadow-xl rounded-b-xl py-1 min-w-[200px]">
                   {categories.slice(8).map((cat: any) => (
-                    <Link key={cat.id} href={`/shop?category=${cat.slug}`} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600 transition-colors">{cat.name}</Link>
+                    <Link key={cat.id} href={`/kategori/${cat.slug}`} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600 transition-colors">{cat.name}</Link>
                   ))}
                 </div>
               </div>
@@ -418,7 +418,7 @@ export default function Header() {
                   <Tag size={14} /> Tüm Ürünler
                 </Link>
                 {(categories as any[]).map((cat: any) => (
-                  <Link key={cat.id} href={`/shop?category=${cat.slug}`} onClick={() => setIsMenuOpen(false)}
+                  <Link key={cat.id} href={`/kategori/${cat.slug}`} onClick={() => setIsMenuOpen(false)}
                     className="flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-50 transition-colors">
                     <span>{cat.name}</span>
                     {cat._count?.products > 0 && <span className="text-[11px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{cat._count.products}</span>}
