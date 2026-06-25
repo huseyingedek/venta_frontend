@@ -6,6 +6,8 @@ import toast from 'react-hot-toast';
 export interface CartItem {
   id: string;          // server cart item id (üye) veya `local-${productId}` (guest)
   productId: string;
+  variantId?: string;
+  variantName?: string;
   quantity: number;
   product: {
     id: string;
@@ -22,7 +24,7 @@ interface CartState {
   items: CartItem[];
   isLoading: boolean;
   fetchCart: () => Promise<void>;
-  addItem: (productId: string, quantity?: number, variantId?: string, productData?: CartItem['product']) => Promise<void>;
+  addItem: (productId: string, quantity?: number, variantId?: string, productData?: CartItem['product'], variantName?: string) => Promise<void>;
   updateItem: (itemId: string, quantity: number) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   clearCart: () => void;
@@ -47,18 +49,26 @@ export const useCartStore = create<CartState>()(
         if (!isLoggedIn()) return; // guest: persist'ten gelen local items yeterli
         try {
           const { data } = await api.get('/cart');
-          set({ items: data.data.items || [] });
+          const items = (data.data.items || []).map((item: any) => ({
+            ...item,
+            variantName: item.variant?.name ?? item.variantName,
+          }));
+          set({ items });
         } catch {}
       },
 
       /* ── Sepete ekle ────────────────────────────────────────────── */
-      addItem: async (productId, quantity = 1, variantId, productData) => {
+      addItem: async (productId, quantity = 1, variantId, productData, variantName) => {
         set({ isLoading: true });
         try {
           if (isLoggedIn()) {
             // ── Üye: sunucu sepeti
             const { data } = await api.post('/cart/items', { productId, quantity, variantId });
-            set({ items: data.data.items || [] });
+            const items = (data.data.items || []).map((item: any) => ({
+              ...item,
+              variantName: item.variant?.name ?? item.variantName,
+            }));
+            set({ items });
           } else {
             // ── Guest: local sepet
             const existing = get().items.find(i => i.productId === productId);
@@ -89,6 +99,8 @@ export const useCartStore = create<CartState>()(
               const newItem: CartItem = {
                 id: `local-${productId}-${Date.now()}`,
                 productId,
+                variantId,
+                variantName,
                 quantity,
                 product,
               };
@@ -113,7 +125,11 @@ export const useCartStore = create<CartState>()(
         if (isLoggedIn()) {
           try {
             const { data } = await api.put(`/cart/items/${itemId}`, { quantity });
-            set({ items: data.data.items || [] });
+            const items = (data.data.items || []).map((item: any) => ({
+              ...item,
+              variantName: item.variant?.name ?? item.variantName,
+            }));
+            set({ items });
           } catch {}
         } else {
           set({
@@ -129,7 +145,11 @@ export const useCartStore = create<CartState>()(
         if (isLoggedIn()) {
           try {
             const { data } = await api.delete(`/cart/items/${itemId}`);
-            set({ items: data.data.items || [] });
+            const items = (data.data.items || []).map((item: any) => ({
+              ...item,
+              variantName: item.variant?.name ?? item.variantName,
+            }));
+            set({ items });
           } catch {}
         } else {
           set({ items: get().items.filter(i => i.id !== itemId) });

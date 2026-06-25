@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft, Package, User, MapPin, CreditCard, Truck,
-  ExternalLink, Copy, CheckCheck, MessageCircle, ClipboardList,
+  ExternalLink, Copy, CheckCheck, ClipboardList,
   ChevronDown, AlertCircle, Check,
 } from 'lucide-react';
 import api from '@/lib/api';
@@ -150,16 +150,6 @@ export default function AdminOrderDetailPage() {
   const currentStep = STATUS_FLOW.indexOf(order.status);
   const total = Number(order.total).toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
 
-  // WhatsApp linki
-  const rawPhone = user?.phone?.replace(/\D/g, '');
-  const waPhone = rawPhone
-    ? rawPhone.startsWith('0') ? '90' + rawPhone.slice(1)
-    : rawPhone.startsWith('90') ? rawPhone : '90' + rawPhone
-    : null;
-  const waLink = waPhone
-    ? `https://wa.me/${waPhone}?text=${encodeURIComponent(`Merhaba ${user.firstName}, Venta Premium siparişiniz (#${order.orderNumber}) için ödemenizi aldık. En kısa sürede kargoya vereceğiz. Takip numaranızı paylaşacağız 🙏`)}`
-    : null;
-
   const handleStatusChange = () => {
     if (!selectedStatus || selectedStatus === order.status) return;
     const isDanger = selectedStatus === 'CANCELLED' || selectedStatus === 'REFUNDED';
@@ -198,12 +188,6 @@ export default function AdminOrderDetailPage() {
               {new Date(order.createdAt).toLocaleString('tr-TR', { dateStyle: 'long', timeStyle: 'short' })}
             </p>
           </div>
-          {waLink && (
-            <a href={waLink} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1.5 rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition-colors">
-              <MessageCircle size={15} /> WhatsApp
-            </a>
-          )}
         </div>
 
         {/* Durum akışı */}
@@ -421,12 +405,6 @@ export default function AdminOrderDetailPage() {
                     <span>{user.phone}</span>
                     <CopyBtn value={user.phone} />
                   </div>
-                )}
-                {waLink && (
-                  <a href={waLink} target="_blank" rel="noopener noreferrer"
-                    className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-green-600 py-2 text-sm font-semibold text-white hover:bg-green-700 transition-colors">
-                    <MessageCircle size={14} /> WhatsApp'tan Yaz
-                  </a>
                 )}
               </div>
             </div>

@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { ShoppingCart, Heart, Star } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCartStore } from '@/store/cart.store';
 import { useWishlistStore } from '@/store/wishlist.store';
 
@@ -24,7 +24,12 @@ interface Product {
 export default function ProductCard({ product }: { product: Product }) {
   const { addItem, isLoading } = useCartStore();
   const { toggle: toggleWishlist, has } = useWishlistStore();
-  const inWishlist = has(product.id);
+  const [inWishlist, setInWishlist] = useState(false);
+
+  // localStorage SSR mismatch'ini önlemek için client-side'da güncelle
+  useEffect(() => {
+    setInWishlist(has(product.id));
+  }, [product.id, has]);
 
   const [hovered, setHovered] = useState(false);
   const imageUrl = product.thumbnail || product.images?.[0]?.url;
@@ -39,7 +44,7 @@ export default function ProductCard({ product }: { product: Product }) {
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    toggleWishlist(product.id);
+    toggleWishlist(product.id).then(() => setInWishlist(has(product.id)));
   };
 
   const handleAddToCart = async (e: React.MouseEvent) => {

@@ -1,7 +1,7 @@
 'use client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Search, ChevronRight, MessageCircle, ExternalLink, Filter } from 'lucide-react';
+import { Search, ChevronRight, ExternalLink, Filter } from 'lucide-react';
 import api from '@/lib/api';
 import Link from 'next/link';
 
@@ -190,18 +190,6 @@ export default function AdminOrdersPage() {
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center justify-end gap-1.5">
-                          {waLink && (
-                            <a
-                              href={waLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={e => e.stopPropagation()}
-                              title="WhatsApp'tan yaz"
-                              className="flex h-7 w-7 items-center justify-center rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
-                            >
-                              <MessageCircle size={13} />
-                            </a>
-                          )}
                           <Link
                             href={`/admin/orders/${order.id}`}
                             className="flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 transition-colors"

@@ -63,7 +63,12 @@ export default function CartPage() {
                 {/* Bilgi */}
                 <div className="flex flex-1 flex-col justify-between min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-xs sm:text-sm font-semibold text-gray-800 line-clamp-2">{item.product.name}</h3>
+                    <div className="min-w-0">
+                      <h3 className="text-xs sm:text-sm font-semibold text-gray-800 line-clamp-2">{item.product.name}</h3>
+                      {item.variantName && (
+                        <p className="mt-0.5 text-xs text-brand-600 font-medium">{item.variantName}</p>
+                      )}
+                    </div>
                     <button
                       onClick={() => removeItem(item.id)}
                       className="shrink-0 rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"

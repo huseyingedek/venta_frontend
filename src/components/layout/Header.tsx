@@ -82,6 +82,8 @@ export default function Header() {
 
   const { isAuthenticated, user, logout } = useAuthStore();
   const { totalItems, fetchCart }         = useCartStore();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   const showVerifyBanner = isAuthenticated && user && !user.emailVerified && !bannerDismissed;
 
   const resendVerification = useMutation({
@@ -154,7 +156,7 @@ export default function Header() {
     url?.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '')}${url}`;
 
   const showSuggestions = searchFocus && searchQuery.trim().length >= 2;
-  const cartCount = totalItems();
+  const cartCount = mounted ? totalItems() : 0;
 
   return (
     <header className={`sticky top-0 z-50 bg-white transition-shadow duration-300 ${isScrolled ? 'shadow-lg' : ''}`}>

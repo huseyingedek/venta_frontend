@@ -13,8 +13,8 @@ export const metadata: Metadata = {
   description: 'Venta Premium ile binlerce ürün arasından güvenle alışveriş yapın. Hızlı kargo, kolay iade, güvenli ödeme.',
   keywords: ['e-ticaret', 'online alışveriş', 'venta premium', 'güvenilir alışveriş'],
   icons: {
-    icon: '/ventapremium.ico',
-    shortcut: '/ventapremium.ico',
+    icon: '/logo.jpeg',
+    shortcut: '/logo.jpeg',
   },
   verification: {
     google: 'Jem315IPt1aimuKAMfE0crsP4aOoqWhvdfqtYXaRB2I',

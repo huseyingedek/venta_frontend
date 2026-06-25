@@ -1,7 +1,7 @@
 'use client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Plus, RefreshCw, Loader2, ChevronDown, ChevronRight, Truck, Rss, Play } from 'lucide-react';
+import { Plus, RefreshCw, Loader2, ChevronDown, ChevronRight, Truck, Rss, Play, Upload } from 'lucide-react';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 
@@ -11,6 +11,7 @@ export default function AdminSuppliersPage() {
   const [showNewSupplier, setShowNewSupplier] = useState(false);
   const [showFeedForm, setShowFeedForm] = useState<string | null>(null);
   const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
 
   const [supplierForm, setSupplierForm] = useState({ name: '', contactEmail: '' });
   const xmlTedarikMapping = JSON.stringify({
@@ -67,6 +68,24 @@ export default function AdminSuppliersPage() {
     onError: (e: any) => toast.error(e.response?.data?.message || 'Hata'),
   });
 
+  const uploadXmlFile = async (feedId: string, file: File) => {
+    setUploadingId(feedId);
+    try {
+      const formData = new FormData();
+      formData.append('xml', file);
+      const res = await api.post(`/suppliers/feeds/${feedId}/sync-file`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const d = res.data.data;
+      toast.success(`✅ Yüklendi: ${d.created} yeni, ${d.updated} güncellendi, ${d.skipped} atlandı.`);
+      qc.invalidateQueries({ queryKey: ['suppliers'] });
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'Yükleme hatası');
+    } finally {
+      setUploadingId(null);
+    }
+  };
+
   const syncFeed = async (feedId: string) => {
     setSyncingId(feedId);
     try {
@@ -80,6 +99,16 @@ export default function AdminSuppliersPage() {
       setSyncingId(null);
     }
   };
+
+  const backfillVariants = useMutation({
+    mutationFn: () => api.post('/suppliers/backfill-variants'),
+    onSuccess: (res) => {
+      const d = res.data.data;
+      toast.success(`✅ ${d.filled} ürüne varyant eklendi, ${d.skipped} atlandı.`);
+      qc.invalidateQueries({ queryKey: ['suppliers'] });
+    },
+    onError: () => toast.error('Varyant doldurma hatası'),
+  });
 
   const syncAll = useMutation({
     mutationFn: () => api.post('/suppliers/sync-all'),
@@ -107,6 +136,10 @@ export default function AdminSuppliersPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Tedarikçi & XML Yönetimi</h1>
         <div className="flex gap-2">
+          <button onClick={() => backfillVariants.mutate()} disabled={backfillVariants.isPending} className="btn-outline gap-2 text-sm border-orange-300 text-orange-600 hover:bg-orange-50">
+            {backfillVariants.isPending ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+            Varyantları Doldur
+          </button>
           <button onClick={() => syncAll.mutate()} disabled={syncAll.isPending} className="btn-outline gap-2 text-sm">
             {syncAll.isPending ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
             Tümünü Senkronize Et
@@ -229,10 +262,26 @@ export default function AdminSuppliersPage() {
                               {feed.lastSyncAt && ` · Son: ${new Date(feed.lastSyncAt).toLocaleString('tr-TR')}`}
                             </p>
                           </div>
-                          <button onClick={() => syncFeed(feed.id)} disabled={syncingId === feed.id} className="ml-3 flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700 transition-colors disabled:opacity-50">
-                            {syncingId === feed.id ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} />}
-                            Senkronize Et
-                          </button>
+                          <div className="ml-3 flex gap-2 shrink-0">
+                            <button onClick={() => syncFeed(feed.id)} disabled={syncingId === feed.id} className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700 transition-colors disabled:opacity-50">
+                              {syncingId === feed.id ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} />}
+                              Senkronize Et
+                            </button>
+                            <label className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white cursor-pointer transition-colors ${uploadingId === feed.id ? 'bg-gray-400 pointer-events-none' : 'bg-orange-500 hover:bg-orange-600'}`}>
+                              {uploadingId === feed.id ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+                              XML Yükle
+                              <input
+                                type="file"
+                                accept=".xml,text/xml,application/xml"
+                                className="hidden"
+                                onChange={e => {
+                                  const file = e.target.files?.[0];
+                                  if (file) uploadXmlFile(feed.id, file);
+                                  e.target.value = '';
+                                }}
+                              />
+                            </label>
+                          </div>
                         </div>
                       ))}
                     </div>
