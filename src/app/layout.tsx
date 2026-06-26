@@ -1,12 +1,8 @@
 import type { Metadata } from 'next';
-import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 import Script from 'next/script';
 import './globals.css';
 import Providers from './providers';
-
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-const plusJakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-plus-jakarta' });
 
 export const metadata: Metadata = {
   title: { default: 'Venta Premium | Kalite ve Güvenin Adresi', template: '%s | Venta Premium' },
@@ -86,7 +82,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
       </head>
-      <body className={`${inter.variable} ${plusJakarta.variable} font-sans`}>
+      <body className="font-sans">
         <Providers>
           {children}
           <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
