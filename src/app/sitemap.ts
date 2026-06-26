@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://ventapremium.com';
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.ventapremium.com.tr/api/v1api/v1';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.ventapremium.com.tr/api/v1';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Statik sayfalar

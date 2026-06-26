@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import KategoriClient from './KategoriClient';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.ventapremium.com.tr/api/v1api/v1';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.ventapremium.com.tr/api/v1';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://ventapremium.com';
 
 // Tüm derinliklerde kategori ara (recursive)

@@ -5,7 +5,7 @@ import ProductCard from '@/components/product/ProductCard';
 import FlashSaleSection from '@/components/home/FlashSaleSection';
 import SectionCarousel from '@/components/home/SectionCarousel';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.ventapremium.com.tr/api/v1api/v1';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.ventapremium.com.tr/api/v1';
 
 const features = [
   { icon: Truck,     title: 'Hızlı Kargo',     desc: 'Sürat Kargo ile 1-3 iş günü' },
