@@ -12,6 +12,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/auth/register`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
   ];
 
+  // Yardımcı: timeout'lu fetch (build sırasında backend yoksa takılmasın)
+  const fetchWithTimeout = (url: string, options: RequestInit, ms = 5000) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ms);
+    return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+  };
+
   // Dinamik: ürünler (tüm sayfaları çek)
   let productPages: MetadataRoute.Sitemap = [];
   try {
@@ -19,9 +26,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     let page = 1;
     let hasMore = true;
     while (hasMore) {
-      const res = await fetch(
+      const res = await fetchWithTimeout(
         `${API_URL}/products?limit=${PAGE_SIZE}&page=${page}&sort=createdAt&order=desc`,
-        { next: { revalidate: 3600 } }
+        { next: { revalidate: 3600 } } as RequestInit
       );
       if (!res.ok) break;
       const json = await res.json();
@@ -43,7 +50,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dinamik: kategoriler
   let categoryPages: MetadataRoute.Sitemap = [];
   try {
-    const res = await fetch(`${API_URL}/categories`, { next: { revalidate: 86400 } });
+    const res = await fetchWithTimeout(`${API_URL}/categories`, { next: { revalidate: 86400 } } as RequestInit);
     if (res.ok) {
       const json = await res.json();
       const categories = json.data || [];

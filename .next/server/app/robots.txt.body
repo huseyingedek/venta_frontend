@@ -1,0 +1,19 @@
+User-Agent: *
+Allow: /
+Allow: /shop
+Allow: /product/
+Allow: /about
+Allow: /shipping
+Allow: /returns
+Allow: /privacy
+Disallow: /admin/
+Disallow: /account/
+Disallow: /checkout/
+Disallow: /cart
+Disallow: /wishlist
+Disallow: /auth/
+Disallow: /mesafeli-satis
+Disallow: /api/
+
+Host: http://localhost:3000
+Sitemap: http://localhost:3000/sitemap.xml
