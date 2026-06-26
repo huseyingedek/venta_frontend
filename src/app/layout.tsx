@@ -85,7 +85,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
-        {/* Google Ads tag */}
+      </head>
+      <body className={`${inter.variable} ${plusJakarta.variable} font-sans`}>
+        <Providers>
+          {children}
+          <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
+        </Providers>
+        {/* Google Ads tag — body sonunda olmalı (afterInteractive) */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=AW-18229741729"
           strategy="afterInteractive"
@@ -98,12 +104,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             gtag('config', 'AW-18229741729');
           `}
         </Script>
-      </head>
-      <body className={`${inter.variable} ${plusJakarta.variable} font-sans`}>
-        <Providers>
-          {children}
-          <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
-        </Providers>
       </body>
     </html>
   );
