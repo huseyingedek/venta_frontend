@@ -1,8 +1,1 @@
-{
-  "/admin/suppliers/page": "app/admin/suppliers/page.js",
-  "/(store)/product/[slug]/page": "app/(store)/product/[slug]/page.js",
-  "/(store)/kategori/[slug]/page": "app/(store)/kategori/[slug]/page.js",
-  "/(store)/page": "app/(store)/page.js",
-  "/(store)/shop/page": "app/(store)/shop/page.js",
-  "/(store)/cart/page": "app/(store)/cart/page.js"
-}
+{}

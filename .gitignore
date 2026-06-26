@@ -1,5 +1,8 @@
 node_modules/
 .env
+.env.local
+.env.production.local
+.env.development.local
 uploads/products/*.jpg
 uploads/products/*.png
 uploads/products/*.webp
